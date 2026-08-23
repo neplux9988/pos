@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftPOS Pro - Advanced Retail & Grocery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Figtree:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg: #0c0d10; --surface: #14151a; --surface2: #1c1d24; --surface3: #23242e;
+  --border: #2a2b36; --border2: #333440;
+  --accent: #f5c518; --accent-dim: #2a2410;
+  --green: #22c55e; --green-dim: #0a1f10;
+  --red: #ef4444; --red-dim: #200a0a;
+  --blue: #3b82f6; --blue-dim: #0a1020;
+  --orange: #f97316; --orange-dim: #1f1008;
+  --purple: #a855f7; --purple-dim: #180a2a;
+  --text: #eeeef0; --muted: #6b6c7e; --muted2: #45465a;
+  --radius: 10px; --radius-lg: 16px;
+  --fh: 'Bebas Neue', sans-serif;
+  --fb: 'Figtree', sans-serif;
+  --fm: 'IBM Plex Mono', monospace;
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px}
+
+/* AUTH */
+#auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 100% 80% at 50% 0%,#1a1800 0%,var(--bg) 65%);z-index:999}
+.auth-box{width:400px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 36px;box-shadow:0 40px 100px #000a}
+.auth-logo{font-family:var(--fh);font-size:36px;letter-spacing:2px;margin-bottom:2px}
+.auth-logo b{color:var(--accent)}
+.auth-tag{font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:2px;margin-bottom:32px}
+.lbl{font-size:10px;font-family:var(--fm);text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:block;margin-bottom:5px}
+.inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .2s;margin-bottom:14px}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--muted2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;user-select:none}
+.btn:active{transform:scale(0.97)}
+.btn-y{background:var(--accent);color:#111}
+.btn-y:hover{background:#ffd132;box-shadow:0 4px 12px rgba(245,197,24,0.3)}
+.btn-g{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-g:hover{background:var(--surface3);border-color:var(--border2)}
+.btn-r{background:var(--red-dim);color:var(--red);border:1px solid #3a1212}
+.btn-r:hover{background:#2a0e0e}
+.btn-gr{background:var(--green-dim);color:var(--green);border:1px solid #1a4a28}
+.btn-gr:hover{background:#0e2a14}
+.btn-b{background:var(--blue-dim);color:var(--blue);border:1px solid #142048}
+.btn-b:hover{background:#0e1a38}
+.btn-o{background:var(--orange-dim);color:var(--orange);border:1px solid #3a2010}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
+.btn-full{width:100%}
+.auth-err{color:var(--red);font-size:12px;min-height:16px;text-align:center;margin-top:8px}
+.auth-hint{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);text-align:center;font-family:var(--fm)}
+
+/* LAYOUT */
+#app{display:none;height:100vh;flex-direction:column}
+.topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;z-index:10}
+.logo{font-family:var(--fh);font-size:24px;letter-spacing:1px;flex-shrink:0}
+.logo b{color:var(--accent)}
+.shift-badge{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--fm)}
+.shift-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.shift-dot.open{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.nav{display:flex;gap:2px;margin-left:8px;overflow-x:auto}
+.nb{padding:8px 13px;border-radius:7px;font-size:12px;font-weight:600;color:var(--muted);background:transparent;border:none;cursor:pointer;transition:all .15s;font-family:var(--fb);white-space:nowrap}
+.nb:hover{color:var(--text);background:var(--surface2)}
+.nb.on{color:var(--accent);background:var(--accent-dim);box-shadow:inset 0 0 0 1px rgba(245,197,24,0.2)}
+.topbar-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.user-chip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 11px;font-size:12px}
+.udot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.udot.adm{background:var(--accent)}
+
+/* MAIN */
+.main{flex:1;overflow:hidden;display:flex}
+.page{display:none;width:100%;flex-direction:column;overflow-y:auto;padding:24px;gap:20px}
+.page.on{display:flex}
+
+/* POS LAYOUT */
+#page-pos{padding:0;overflow:hidden}
+.pos-wrap{display:grid;grid-template-columns:1fr 420px;height:100%;overflow:hidden}
+.pos-left{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+.pos-right{display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
+.pos-mode-bar{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+.pm-tab{padding:12px 20px;font-size:12px;font-weight:700;font-family:var(--fm);text-transform:uppercase;letter-spacing:1px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;background:none;border-left:none;border-right:none;border-top:none}
+.pm-tab:hover{color:var(--text)}
+.pm-tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.register-view{flex:1;display:flex;flex-direction:column;padding:16px;gap:12px;overflow:hidden}
+.reg-display{background:linear-gradient(135deg,var(--surface2),var(--surface3));border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;flex-direction:column;gap:4px}
+.reg-label{font-size:10px;font-family:var(--fm);text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+.reg-amount{font-family:var(--fh);font-size:52px;letter-spacing:2px;color:var(--accent);line-height:1;text-shadow:0 0 20px rgba(245,197,24,0.3)}
+.reg-desc-input{background:var(--surface3);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;width:100%}
+.reg-desc-input:focus{border-color:var(--accent)}
+.numpad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1}
+.nk{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--fh);font-size:24px;color:var(--text);cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;aspect-ratio:auto;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.nk:hover{background:var(--surface3);border-color:var(--border2);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.nk:active{transform:scale(0.95);background:var(--surface3)}
+.nk.accent{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.nk.accent:hover{background:#332b10;box-shadow:0 4px 12px rgba(245,197,24,0.2)}
+.nk.red{background:var(--red-dim);border-color:#3a1212;color:var(--red)}
+.nk.green{background:var(--green-dim);border-color:#1a4a28;color:var(--green);grid-column:span 2}
+.nk.wide{grid-column:span 2}
+.nk.fs{font-size:16px;font-family:var(--fb);font-weight:700}
+
+/* PRODUCTS */
+.products-view{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px;gap:10px}
+.search-row{display:flex;gap:8px}
+.search-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px 9px 36px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;transition:border-color .2s}
+.search-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,197,24,0.1)}
+.search-wrap{position:relative;flex:1}
+.search-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.cats{display:flex;gap:6px;flex-wrap:wrap}
+.cat{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
+.cat:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.cat.on{background:var(--accent);border-color:var(--accent);color:#111;box-shadow:0 2px 8px rgba(245,197,24,0.3)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;overflow-y:auto;padding-bottom:4px}
+.pcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px;user-select:none;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.pcard:hover{border-color:var(--accent);box-shadow:0 6px 20px rgba(245,197,24,0.15);transform:translateY(-3px)}
+.pcard:active{transform:scale(.96)}
+.pcard.oos{opacity:.35;pointer-events:none}
+.pcard-emoji{font-size:28px}
+.pcard-name{font-size:12px;font-weight:700;line-height:1.3}
+.pcard-price{font-family:var(--fm);font-size:13px;color:var(--accent);font-weight:600}
+.pcard-stock{font-size:10px;color:var(--muted)}
+.pcard-stock.low{color:var(--orange)}
+.pcard-stock.out{color:var(--red)}
+.pcard-badge{position:absolute;top:8px;right:8px;background:var(--red);color:white;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700}
+.holds-view{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.hold-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.hold-card:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(59,130,246,0.2);transform:translateX(4px)}
+
+/* CART */
+.cart-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.cart-hdr-title{font-family:var(--fh);font-size:17px;letter-spacing:.5px}
+.cart-badge{background:var(--accent);color:#111;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;font-family:var(--fm)}
+.cart-body{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
+.ci{background:var(--surface2);border-radius:8px;padding:9px 10px;display:flex;align-items:center;gap:8px;animation:slideIn 0.3s ease;border:1px solid var(--border)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.ci-emoji{font-size:17px;flex-shrink:0}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-price{font-family:var(--fm);font-size:12px;color:var(--accent);flex-shrink:0;font-weight:600}
+.qc{display:flex;align-items:center;gap:5px}
+.qb{width:24px;height:24px;border-radius:6px;background:var(--surface3);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0}
+.qb:hover{background:var(--border2);border-color:var(--accent)}
+.qn{font-family:var(--fm);font-size:12px;min-width:18px;text-align:center;font-weight:600}
+.ci-del{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:15px;padding:2px;flex-shrink:0;transition:color .15s}
+.ci-del:hover{color:var(--red)}
+.order-note-row{background:var(--surface2);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:1px dashed var(--border);margin:0 10px}
+.order-note-row input{flex:1;background:transparent;border:none;outline:none;font-size:12px;color:var(--muted);font-family:var(--fb)}
+.order-note-row input:focus{color:var(--text)}
+.cart-footer{border-top:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.cline{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.cline .v{font-family:var(--fm)}
+.cline.total{font-family:var(--fh);font-size:20px;letter-spacing:.5px;color:var(--text)}
+.cline.total .v{color:var(--accent);font-size:24px}
+.disc-row{display:flex;gap:6px}
+.disc-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--fb);font-size:12px;outline:none;max-width:80px}
+.disc-row input:focus{border-color:var(--accent)}
+.disc-row select{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--fb);font-size:12px;outline:none}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.loyalty-row{display:flex;gap:6px;align-items:center;margin:0 10px 8px;padding:8px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.loyalty-row span{font-size:11px;color:var(--muted)}
+.loyalty-row .v{font-family:var(--fm);color:var(--purple);font-weight:600}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:#000c;backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:500;padding:16px}
+.overlay.on{display:flex;animation:fadeIn 0.2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 40px 100px #000c;animation:slideUp 0.3s}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-family:var(--fh);font-size:22px;letter-spacing:.5px;margin-bottom:20px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+
+/* PAYMENT */
+#m-pay .modal{width:500px}
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.pm{padding:14px 6px;border-radius:10px;text-align:center;cursor:pointer;background:var(--surface2);border:2px solid var(--border);transition:all .2s}
+.pm:hover{border-color:var(--accent);transform:translateY(-2px)}
+.pm.on{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 4px 12px rgba(245,197,24,0.2)}
+.pm-ico{font-size:24px;margin-bottom:3px}
+.pm-lbl{font-size:11px;font-weight:700;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px}
+.cash-calc{background:var(--surface2);border-radius:10px;padding:14px}
+.change-big{font-family:var(--fh);font-size:36px;color:var(--green);text-align:center;text-shadow:0 0 20px rgba(34,197,94,0.3)}
+
+/* TABLES */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:6px;transition:all .2s}
+.scard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3)}
+.sc-lbl{font-size:10px;font-family:var(--fm);text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+.sc-val{font-family:var(--fh);font-size:32px;letter-spacing:1px}
+.sc-val.y{color:var(--accent)}
+.sc-val.g{color:var(--green)}
+.sc-val.r{color:var(--red)}
+.sc-val.p{color:var(--purple)}
+.sc-sub{font-size:11px;color:var(--muted)}
+.section-hd{font-family:var(--fh);font-size:18px;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-family:var(--fm);font-weight:500;padding:12px 13px;text-align:left}
+td{padding:12px 13px;font-size:12px;border-top:1px solid var(--border)}
+tr:hover td{background:var(--surface2)}
+.tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--fm)}
+.tag.tg{background:var(--green-dim);color:var(--green)}
+.tag.tr{background:var(--red-dim);color:var(--red)}
+.tag.tb{background:var(--blue-dim);color:var(--blue)}
+.tag.ty{background:var(--accent-dim);color:var(--accent)}
+.tag.to{background:var(--orange-dim);color:var(--orange)}
+
+/* SETTINGS */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.settings-card h3{font-family:var(--fh);font-size:18px;letter-spacing:.5px;margin-bottom:15px;color:var(--accent)}
+.search-filter{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-filter input,.search-filter select{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--fb);font-size:12px;outline:none}
+.search-filter input:focus,.search-filter select:focus{border-color:var(--accent)}
+.search-filter input{flex:1;min-width:180px}
+
+/* TIME TRACKING */
+.time-tracking-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.time-status{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.time-status-dot{width:12px;height:12px;border-radius:50%;background:var(--muted)}
+.time-status-dot.clocked-in{background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2s infinite}
+.time-display{font-family:var(--fh);font-size:48px;letter-spacing:2px;color:var(--accent);text-align:center;margin:20px 0}
+.time-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.time-info-item{background:var(--surface2);padding:12px;border-radius:8px;text-align:center}
+.time-info-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.time-info-value{font-size:18px;font-weight:600;margin-top:4px}
+.attendance-status{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--fm)}
+.attendance-status.present{background:var(--green-dim);color:var(--green)}
+.attendance-status.absent{background:var(--red-dim);color:var(--red)}
+.attendance-status.late{background:var(--orange-dim);color:var(--orange)}
+
+/* MISC */
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-ico{font-size:48px;opacity:.3;margin-bottom:10px}
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:7px;max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.s{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+#toast.e{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+#toast.i{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+#toast.w{border-color:var(--orange);color:var(--orange);background:var(--orange-dim)}
+
+/* PRINT */
+#print-area{display:none;font-family:'Courier New',monospace;font-size:12px;padding:20px;max-width:320px;margin:auto;background:white;color:black}
+#print-area .pc{text-align:center}
+#print-area .pl{display:flex;justify-content:space-between}
+#print-area .ps{border-top:1px dashed #000;margin:7px 0}
+#print-area .pb{font-weight:bold}
+#print-area .plg{font-size:16px;font-weight:bold}
+#print-area .logo-text{font-size:20px;font-weight:bold;text-align:center;margin-bottom:5px}
+#print-area .divider{border-top:1px solid #000;margin:10px 0}
+@media print{body>*{display:none!important}#print-area{display:block!important;position:fixed;top:0;left:0;right:0}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+.flex{display:flex}.gap6{gap:6px}.gap8{gap:8px}.gap10{gap:10px}.items-center{align-items:center}.ml-a{margin-left:auto}
+.mono{font-family:var(--fm)}.muted{color:var(--muted)}
+.customer-search{display:flex;gap:8px;margin-bottom:12px}
+.customer-search input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none}
+.customer-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.customer-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s}
+.customer-item:hover{border-color:var(--accent);background:var(--surface3)}
+.customer-name{font-weight:600;font-size:13px}
+.customer-info{font-size:11px;color:var(--muted);margin-top:2px}
+.tx-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.tx-detail-item{background:var(--surface2);padding:10px;border-radius:8px}
+.tx-detail-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.tx-detail-value{font-size:14px;font-weight:600;margin-top:2px}
+@media (max-width:1024px){.pos-wrap{grid-template-columns:1fr 350px}}
+@media (max-width:768px){.pos-wrap{grid-template-columns:1fr}.pos-right{max-height:50vh}}
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-box">
+    <div class="auth-logo">SWIFT<b>POS</b> <span style="font-size:13px;color:var(--muted);font-family:var(--fm);vertical-align:middle">PRO</span></div>
+    <div class="auth-tag">Advanced Retail & Grocery POS System</div>
+    <label class="lbl">Username</label>
+    <input class="inp" id="au" placeholder="Enter username" autocomplete="off" value="admin">
+    <label class="lbl">Password</label>
+    <input class="inp" id="ap" type="password" placeholder="Enter password" value="admin123">
+    <button class="btn btn-y btn-full" onclick="doLogin()">Sign In →</button>
+    <div class="auth-err" id="aerr"></div>
+    <div class="auth-hint">Default Admin: admin / admin123</div>
+    <button class="btn btn-g btn-sm" onclick="exportData()" style="margin-top:10px;font-size:10px">📤 Export Data</button>
+    <button class="btn btn-g btn-sm" onclick="importData()" style="margin-top:10px;font-size:10px">📥 Import Data</button>
+    <button class="btn btn-r btn-sm" onclick="resetData()" style="margin-top:10px;font-size:10px">🗑 Reset All Data</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="logo">SWIFT<b>POS</b></div>
+    <div class="shift-badge" id="shift-badge">
+      <div class="shift-dot" id="shift-dot"></div>
+      <span id="shift-label">No Shift</span>
+    </div>
+    <nav class="nav" id="main-nav">
+      <button class="nb on" id="nb-pos" onclick="showPage('pos')">🛒 POS</button>
+      <button class="nb" id="nb-dashboard" onclick="showPage('dashboard')">📊 Dashboard</button>
+      <button class="nb" id="nb-transactions" onclick="showPage('transactions')">📜 Transactions</button>
+      <button class="nb" id="nb-inventory" onclick="showPage('inventory')">📦 Inventory</button>
+      <button class="nb" id="nb-customers" onclick="showPage('customers')">👤 Customers</button>
+      <button class="nb" id="nb-shifts" onclick="showPage('shifts')">📋 Shifts</button>
+      <button class="nb" id="nb-reports" onclick="showPage('reports')">📈 Reports</button>
+      <button class="nb" id="nb-time-tracking" onclick="showPage('time-tracking')">⏰ Time Tracking</button>
+      <button class="nb" id="nb-settings" onclick="showPage('settings')" data-admin-only>⚙️ Settings</button>
+    </nav>
+    <div class="topbar-r">
+      <button class="btn btn-gr btn-sm" id="btn-open-shift" onclick="openModal('m-open-shift')">▶ Open Shift</button>
+      <button class="btn btn-o btn-sm" id="btn-close-shift" onclick="closeShift()" style="display:none">■ Close Shift</button>
+      <div class="user-chip"><div class="udot adm" id="udot"></div><span id="ulbl">Admin</span></div>
+      <button class="btn btn-g btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- POS PAGE -->
+    <div class="page on" id="page-pos">
+      <div class="pos-wrap">
+        <div class="pos-left">
+          <div class="pos-mode-bar">
+            <button class="pm-tab on" id="tab-register" onclick="setPosTab('register')">⌨ Register</button>
+            <button class="pm-tab" id="tab-products" onclick="setPosTab('products')">🛍 Products</button>
+            <button class="pm-tab" id="tab-holds" onclick="setPosTab('holds')">⏸ Held (<span id="hold-count">0</span>)</button>
+          </div>
+          <div class="register-view" id="pane-register">
+            <div class="reg-display">
+              <div class="reg-label">Enter Amount</div>
+              <div class="reg-amount" id="reg-display">$0.00</div>
+              <input class="reg-desc-input" id="reg-desc" placeholder="Item description (optional)">
+            </div>
+            <div class="numpad">
+              <button class="nk" onclick="numpad('7')">7</button>
+              <button class="nk" onclick="numpad('8')">8</button>
+              <button class="nk" onclick="numpad('9')">9</button>
+              <button class="nk red" onclick="numpad('back')">⌫</button>
+              <button class="nk" onclick="numpad('4')">4</button>
+              <button class="nk" onclick="numpad('5')">5</button>
+              <button class="nk" onclick="numpad('6')">6</button>
+              <button class="nk red" onclick="numpad('clear')">C</button>
+              <button class="nk" onclick="numpad('1')">1</button>
+              <button class="nk" onclick="numpad('2')">2</button>
+              <button class="nk" onclick="numpad('3')">3</button>
+              <button class="nk accent" onclick="numpad('qty')" id="nk-qty">× QTY</button>
+              <button class="nk wide" onclick="numpad('0')">0</button>
+              <button class="nk" onclick="numpad('.')">.</button>
+              <button class="nk accent" onclick="numpad('percent')" id="nk-pct">% DISC</button>
+              <button class="nk green fs" onclick="numpad('add')">+ ADD TO ORDER</button>
+            </div>
+          </div>
+          <div class="products-view" id="pane-products" style="display:none">
+            <div class="search-row">
+              <div class="search-wrap">
+                <span class="search-ico">🔍</span>
+                <input class="search-inp" id="psearch" placeholder="Search by name or SKU..." oninput="renderProducts()">
+              </div>
+            </div>
+            <div class="cats" id="cats"></div>
+            <div class="pgrid" id="pgrid"></div>
+          </div>
+          <div class="holds-view" id="pane-holds" style="display:none">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Tap a held order to resume it</div>
+            <div id="holds-list"></div>
+          </div>
+        </div>
+
+        <div class="pos-right">
+          <div class="cart-hdr">
+            <div class="cart-hdr-title">ORDER</div>
+            <span class="cart-badge" id="cart-badge">0</span>
+            <div class="ml-a flex gap6">
+              <button class="btn btn-g btn-xs" onclick="openModal('m-cust')" title="Select Customer">👤</button>
+              <button class="btn btn-g btn-xs" onclick="holdOrder()" title="Hold order">⏸</button>
+              <button class="btn btn-g btn-xs" onclick="clearCart()" title="Clear cart">🗑</button>
+            </div>
+          </div>
+          <div class="cart-body" id="cart-body">
+            <div class="empty"><div class="empty-ico">🛒</div><p>Add items or use register</p></div>
+          </div>
+          <div class="order-note-row"><span style="font-size:16px">📝</span><input id="order-note" placeholder="Order note…"></div>
+          <div class="loyalty-row" id="loyalty-row" style="display:none">
+            <span>👤 <span id="cust-name"></span></span>
+            <span class="ml-a">Points: <span class="v" id="cust-points">0</span></span>
+            <button class="btn btn-xs btn-r" onclick="clearCustomer()">✕</button>
+          </div>
+          <div class="cart-footer">
+            <div class="disc-row">
+              <input type="number" id="disc-v" placeholder="Disc" min="0" oninput="calcTotals()">
+              <select id="disc-t" onchange="calcTotals()"><option value="pct">% Off</option><option value="fixed">$ Off</option></select>
+              <input type="number" id="tip-v" placeholder="Tip $" min="0" oninput="calcTotals()">
+            </div>
+            <div class="cline"><span>Subtotal</span><span class="v" id="c-sub">$0.00</span></div>
+            <div class="cline"><span>Discount</span><span class="v" id="c-disc">-$0.00</span></div>
+            <div class="cline"><span>Tax (<span id="tax-lbl">10</span>%)</span><span class="v" id="c-tax">$0.00</span></div>
+            <div class="cline"><span>Tip</span><span class="v" id="c-tip">$0.00</span></div>
+            <div class="cline total"><span>TOTAL</span><span class="v" id="c-total">$0.00</span></div>
+            <div class="action-row">
+              <button class="btn btn-r btn-sm" onclick="voidLast()">✕ Void Last</button>
+              <button class="btn btn-b btn-sm" onclick="openDeliveryModal()">🚚 Delivery</button>
+            </div>
+            <button class="btn btn-y btn-full" style="padding:14px;font-size:16px" onclick="openPayModal()">💳 PAY NOW</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page" id="page-dashboard">
+      <div class="section-hd">Dashboard Overview</div>
+      <div class="dash-grid">
+        <div class="scard"><div class="sc-lbl">Today's Sales</div><div class="sc-val y" id="dash-sales">$0.00</div><div class="sc-sub" id="dash-orders-cnt">0 transactions</div></div>
+        <div class="scard"><div class="sc-lbl">Total Tax Collected</div><div class="sc-val g" id="dash-tax">$0.00</div><div class="sc-sub" id="dash-tax-rate">Tax Rate: 10%</div></div>
+        <div class="scard"><div class="sc-lbl">Active Shift</div><div class="sc-val p" id="dash-shift-status">Closed</div><div class="sc-sub" id="dash-cashier">—</div></div>
+        <div class="scard"><div class="sc-lbl">Low Stock Alert</div><div class="sc-val r" id="dash-low-stock">0</div><div class="sc-sub">Items below threshold</div></div>
+        <div class="scard"><div class="sc-lbl">Total Customers</div><div class="sc-val" style="color:var(--blue)" id="dash-customers">0</div><div class="sc-sub">In database</div></div>
+        <div class="scard"><div class="sc-lbl">Average Order Value</div><div class="sc-val" style="color:var(--orange)" id="dash-avg-order">$0.00</div><div class="sc-sub">Per transaction</div></div>
+      </div>
+      <div class="section-hd" style="margin-top:10px">Recent Transactions</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Tx ID</th><th>Customer</th><th>Payment</th><th>Total</th><th>Actions</th></tr></thead>
+          <tbody id="dash-tx-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS PAGE -->
+    <div class="page" id="page-transactions">
+      <div class="section-hd">Transaction History</div>
+      <div class="search-filter">
+        <input id="tx-search" placeholder="Search by ID, customer, or date..." oninput="renderTransactions()">
+        <select id="tx-method-filter" onchange="renderTransactions()">
+          <option value="all">All Methods</option>
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="mobile">Mobile</option>
+          <option value="delivery">Delivery</option>
+        </select>
+        <select id="tx-date-filter" onchange="renderTransactions()">
+          <option value="all">All Dates</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+        </select>
+        <button class="btn btn-b btn-sm" onclick="exportTransactions()">📤 Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date/Time</th><th>Tx ID</th><th>Customer</th><th>Items</th><th>Payment</th><th>Total</th><th>Actions</th></tr></thead>
+          <tbody id="tx-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INVENTORY PAGE -->
+    <div class="page" id="page-inventory">
+      <div class="section-hd">
+        Inventory Management
+        <div class="flex gap6">
+          <button class="btn btn-b btn-sm" onclick="exportInventory()">📤 Export</button>
+          <button class="btn btn-y btn-sm" onclick="openModal('m-add-prod')">+ Add Product</button>
+        </div>
+      </div>
+      <div class="inv-tb">
+        <input id="inv-search" placeholder="Search inventory by name or SKU..." oninput="renderInventory()">
+        <select id="inv-cat-filter" onchange="renderInventory()"><option value="all">All Categories</option></select>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Category</th><th>SKU</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="inv-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS PAGE -->
+    <div class="page" id="page-customers">
+      <div class="section-hd">
+        Customer Directory
+        <button class="btn btn-y btn-sm" onclick="openModal('m-add-cust')">+ Add Customer</button>
+      </div>
+      <div class="search-filter">
+        <input id="cust-search-page" placeholder="Search customers..." oninput="renderCustomersPage()">
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Loyalty Points</th><th>Total Spent</th><th>Actions</th></tr></thead>
+          <tbody id="cust-tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SHIFTS PAGE -->
+    <div class="page" id="page-shifts">
+      <div class="section-hd">
+        Shift History
+        <button class="btn btn-b btn-sm" onclick="exportShifts()">📤 Export Report</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Opened</th><th>Closed</th><th>Starting Cash</th><th>Sales Total</th><th>Cash Collected</th><th>Card Collected</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="shifts-history-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPORTS PAGE -->
+    <div class="page" id="page-reports">
+      <div class="section-hd">Reports & Analytics</div>
+      <div class="search-filter">
+        <select id="report-period" onchange="renderReports()">
+          <option value="daily">Daily Report</option>
+          <option value="weekly">Weekly Report</option>
+          <option value="monthly">Monthly Report</option>
+        </select>
+        <button class="btn btn-y btn-sm" onclick="generateReport()">📊 Generate Report</button>
+        <button class="btn btn-b btn-sm" onclick="exportReport()">📤 Export Report</button>
+      </div>
+      <div id="report-content" class="dash-grid" style="margin-top:20px"></div>
+    </div>
+
+    <!-- TIME TRACKING PAGE -->
+    <div class="page" id="page-time-tracking">
+      <div class="section-hd">Employee Time Tracking</div>
+      <div class="time-tracking-card">
+        <div class="time-status">
+          <div class="time-status-dot" id="time-status-dot"></div>
+          <span id="time-status-text" style="font-weight:600">Not Clocked In</span>
+        </div>
+        <div class="time-display" id="time-display">00:00:00</div>
+        <div class="flex gap8" style="justify-content:center;margin-top:20px">
+          <button class="btn btn-gr" id="btn-clock-in" onclick="clockIn()">🕐 Clock In</button>
+          <button class="btn btn-o" id="btn-clock-out" onclick="clockOut()" style="display:none">🕑 Clock Out</button>
+          <button class="btn btn-b" id="btn-break-start" onclick="startBreak()" style="display:none">☕ Start Break</button>
+          <button class="btn btn-y" id="btn-break-end" onclick="endBreak()" style="display:none">▶ End Break</button>
+        </div>
+        <div class="time-info">
+          <div class="time-info-item"><div class="time-info-label">Clock In Time</div><div class="time-info-value" id="clock-in-time">—</div></div>
+          <div class="time-info-item"><div class="time-info-label">Total Hours Today</div><div class="time-info-value" id="total-hours">0h 0m</div></div>
+          <div class="time-info-item"><div class="time-info-label">Break Time</div><div class="time-info-value" id="break-time">0h 0m</div></div>
+          <div class="time-info-item"><div class="time-info-label">Current Status</div><div class="time-info-value" id="current-status">Not Working</div></div>
+        </div>
+      </div>
+      <div class="section-hd" style="margin-top:20px">Today's Attendance</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Break Start</th><th>Break End</th><th>Total Hours</th><th>Status</th></tr></thead>
+          <tbody id="attendance-body"></tbody>
+        </table>
+      </div>
+      <div class="section-hd" style="margin-top:20px">Attendance History</div>
+      <div class="search-filter">
+        <input id="attendance-search" placeholder="Search by employee name..." oninput="renderAttendanceHistory()">
+        <select id="attendance-date-filter" onchange="renderAttendanceHistory()">
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="all">All Time</option>
+        </select>
+        <button class="btn btn-b btn-sm" onclick="exportAttendance()">📤 Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Total Hours</th><th>Break Time</th><th>Status</th></tr></thead>
+          <tbody id="attendance-history-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="section-hd">System Settings</div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>🏪 Store Settings</h3>
+          <div class="field"><label class="lbl">Store Name</label><input class="inp" id="set-store-name" value="SwiftPOS Pro"></div>
+          <div class="field"><label class="lbl">Store Address</label><input class="inp" id="set-store-address" value="123 Main Street, Your City"></div>
+          <div class="field"><label class="lbl">Store Phone</label><input class="inp" id="set-store-phone" value="(555) 123-4567"></div>
+          <div class="field"><label class="lbl">Receipt Footer Message</label><input class="inp" id="set-receipt-footer" value="Thank you for your purchase!"></div>
+          <button class="btn btn-y btn-full" onclick="saveStoreSettings()">Save Store Settings</button>
+        </div>
+        <div class="settings-card">
+          <h3>💰 Tax Settings</h3>
+          <div class="field"><label class="lbl">Tax Rate (%)</label><input class="inp" type="number" id="set-tax-rate" value="10" min="0" max="100" step="0.1"></div>
+          <div class="field"><label class="lbl">Tax Name</label><input class="inp" id="set-tax-name" value="Sales Tax"></div>
+          <button class="btn btn-y btn-full" onclick="saveTaxSettings()">Save Tax Settings</button>
+        </div>
+        <div class="settings-card" data-admin-only>
+          <h3>👥 Cashier Management</h3>
+          <div id="cashier-list" style="margin-bottom:15px"></div>
+          <button class="btn btn-y btn-full" onclick="openModal('m-add-cashier')">+ Add Cashier</button>
+        </div>
+        <div class="settings-card" data-admin-only>
+          <h3>🔐 Role Management</h3>
+          <div id="role-list" style="margin-bottom:15px"></div>
+          <button class="btn btn-y btn-full" onclick="openModal('m-add-role')">+ Add Role</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="m-pay">
+  <div class="modal">
+    <div class="modal-title">Complete Payment</div>
+    <div class="pay-methods">
+      <div class="pm on" id="pm-cash" onclick="setPayMethod('cash')"><div class="pm-ico">💵</div><div class="pm-lbl">Cash</div></div>
+      <div class="pm" id="pm-card" onclick="setPayMethod('card')"><div class="pm-ico">💳</div><div class="pm-lbl">Card</div></div>
+      <div class="pm" id="pm-mobile" onclick="setPayMethod('mobile')"><div class="pm-ico">📱</div><div class="pm-lbl">Mobile</div></div>
+    </div>
+    <div id="pay-cash-sec" class="cash-calc">
+      <label class="lbl">Tendered Cash Amount</label>
+      <input class="inp" type="number" id="cash-tendered" placeholder="0.00" style="font-family:var(--fm);font-size:20px" oninput="calcChange()">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Change Due</div>
+      <div class="change-big" id="change-due">$0.00</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-pay')">Cancel</button>
+      <button class="btn btn-y" onclick="processPayment()">Complete Sale ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-receipt-option">
+  <div class="modal" style="width:350px;text-align:center">
+    <div class="modal-title">Print Receipt?</div>
+    <p style="margin-bottom:20px;color:var(--muted)">Would you like to print a receipt for this transaction?</p>
+    <div class="flex gap8" style="justify-content:center">
+      <button class="btn btn-y" onclick="confirmPrintReceipt(true)">✓ Yes, Print</button>
+      <button class="btn btn-g" onclick="confirmPrintReceipt(false)">✕ No, Skip</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-delivery">
+  <div class="modal" style="width:450px">
+    <div class="modal-title">🚚 Delivery Information</div>
+    <div class="field"><label class="lbl">Customer Name *</label><input class="inp" id="del-name" placeholder="Enter customer name"></div>
+    <div class="field"><label class="lbl">Phone Number *</label><input class="inp" id="del-phone" placeholder="Enter phone number"></div>
+    <div class="field"><label class="lbl">Delivery Address *</label><input class="inp" id="del-address" placeholder="Enter delivery address"></div>
+    <div class="field"><label class="lbl">Email Address</label><input class="inp" id="del-email" placeholder="Enter email (optional)"></div>
+    <div class="field"><label class="lbl">Mode of Payment</label><select class="inp" id="del-payment"><option value="cash">Cash on Delivery</option><option value="card">Card on Delivery</option><option value="mobile">Mobile Payment</option><option value="prepaid">Prepaid Online</option></select></div>
+    <div class="field"><label class="lbl">Delivery Notes</label><input class="inp" id="del-notes" placeholder="Any special instructions"></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-delivery')">Cancel</button>
+      <button class="btn btn-y" onclick="processDelivery()">Create Delivery Order</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-add-cashier">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Add Cashier</div>
+    <div class="field"><label class="lbl">Full Name</label><input class="inp" id="cashier-name"></div>
+    <div class="field"><label class="lbl">Username</label><input class="inp" id="cashier-username"></div>
+    <div class="field"><label class="lbl">Password</label><input class="inp" id="cashier-password" type="password"></div>
+    <div class="field"><label class="lbl">Role</label><select class="inp" id="cashier-role"><option value="admin">Admin</option><option value="cashier">Cashier</option><option value="manager">Manager</option></select></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-add-cashier')">Cancel</button>
+      <button class="btn btn-y" onclick="saveCashier()">Save Cashier</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-add-role">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Add Role</div>
+    <div class="field"><label class="lbl">Role Name</label><input class="inp" id="role-name"></div>
+    <div class="field">
+      <label class="lbl">Permissions</label>
+      <div style="display:grid;gap:8px">
+        <label class="flex items-center gap6" style="font-size:12px;cursor:pointer"><input type="checkbox" id="perm-pos"> POS Access</label>
+        <label class="flex items-center gap6" style="font-size:12px;cursor:pointer"><input type="checkbox" id="perm-inventory"> Inventory Management</label>
+        <label class="flex items-center gap6" style="font-size:12px;cursor:pointer"><input type="checkbox" id="perm-customers"> Customer Management</label>
+        <label class="flex items-center gap6" style="font-size:12px;cursor:pointer"><input type="checkbox" id="perm-reports"> Reports Access</label>
+        <label class="flex items-center gap6" style="font-size:12px;cursor:pointer"><input type="checkbox" id="perm-settings"> Settings Access</label>
+        <label class="flex items-center gap6" style="font-size:12px;cursor:pointer"><input type="checkbox" id="perm-user-mgmt"> User Management (Admin)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-add-role')">Cancel</button>
+      <button class="btn btn-y" onclick="saveRole()">Save Role</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-tx-details">
+  <div class="modal" style="width:500px">
+    <div class="modal-title">Transaction Details</div>
+    <div id="tx-details-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-b" onclick="printReceipt(currentTxDetails)">🖨 Print Receipt</button>
+      <button class="btn btn-g" onclick="closeModal('m-tx-details')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-cust">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Select Customer</div>
+    <div class="customer-search"><input id="cust-search-inp" placeholder="Search customer name or phone..." oninput="searchCustomers()"></div>
+    <div class="customer-list" id="cust-list-container"></div>
+    <div class="modal-footer"><button class="btn btn-g" onclick="closeModal('m-cust')">Cancel</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-open-shift">
+  <div class="modal" style="width:360px">
+    <div class="modal-title">Open Register Shift</div>
+    <div class="field"><label class="lbl">Starting Drawer Cash ($)</label><input class="inp" type="number" id="open-cash-inp" value="100.00"></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-open-shift')">Cancel</button>
+      <button class="btn btn-gr" onclick="confirmOpenShift()">Start Shift</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-close-shift">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Close Shift Summary</div>
+    <div id="close-shift-summary"></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-close-shift')">Cancel</button>
+      <button class="btn btn-r" onclick="confirmCloseShift()">Confirm Close Shift</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-add-prod">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Add New Product</div>
+    <div class="field"><label class="lbl">Product Name</label><input class="inp" id="np-name"></div>
+    <div class="field"><label class="lbl">Category</label><input class="inp" id="np-cat" value="General"></div>
+    <div class="field"><label class="lbl">SKU / Barcode</label><input class="inp" id="np-sku"></div>
+    <div class="field"><label class="lbl">Price ($)</label><input class="inp" type="number" id="np-price" value="0.00"></div>
+    <div class="field"><label class="lbl">Stock Quantity</label><input class="inp" type="number" id="np-stock" value="10"></div>
+    <div class="field"><label class="lbl">Emoji (optional)</label><input class="inp" id="np-emoji" placeholder="📦"></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-add-prod')">Cancel</button>
+      <button class="btn btn-y" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-add-cust">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Add Customer</div>
+    <div class="field"><label class="lbl">Full Name</label><input class="inp" id="nc-name"></div>
+    <div class="field"><label class="lbl">Phone Number</label><input class="inp" id="nc-phone"></div>
+    <div class="field"><label class="lbl">Email Address</label><input class="inp" id="nc-email"></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-add-cust')">Cancel</button>
+      <button class="btn btn-y" onclick="saveCustomer()">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-clock-out-confirm">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Confirm Clock Out</div>
+    <div id="clock-out-summary"></div>
+    <div class="modal-footer">
+      <button class="btn btn-g" onclick="closeModal('m-clock-out-confirm')">Cancel</button>
+      <button class="btn btn-r" onclick="confirmClockOut()">Confirm Clock Out</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="print-area"></div>
+
+<script>
+// INITIAL DATA
+const DEFAULT_PRODUCTS = [
+  { id: 1, name: 'Organic Milk 1L', cat: 'Grocery', sku: '1001', price: 3.99, stock: 24, emoji: '🥛' },
+  { id: 2, name: 'Sourdough Bread', cat: 'Bakery', sku: '1002', price: 4.50, stock: 12, emoji: '🍞' },
+  { id: 3, name: 'Avocado (Fresh)', cat: 'Produce', sku: '1003', price: 1.50, stock: 45, emoji: '🥑' },
+  { id: 4, name: 'Espresso Coffee Beans 500g', cat: 'Beverages', sku: '1004', price: 12.99, stock: 8, emoji: '☕' },
+  { id: 5, name: 'Dark Chocolate Bar 85%', cat: 'Snacks', sku: '1005', price: 2.99, stock: 30, emoji: '🍫' },
+  { id: 6, name: 'Organic Eggs (Dozen)', cat: 'Grocery', sku: '1006', price: 5.49, stock: 18, emoji: '🥚' },
+  { id: 7, name: 'Fresh Orange Juice 1L', cat: 'Beverages', sku: '1007', price: 4.25, stock: 15, emoji: '🍊' },
+  { id: 8, name: 'Whole Wheat Pasta', cat: 'Grocery', sku: '1008', price: 2.49, stock: 40, emoji: '🍝' }
+];
+
+const DEFAULT_CUSTOMERS = [
+  { id: 1, name: 'John Doe', phone: '555-0192', email: 'john@example.com', points: 120, totalSpent: 450.50 },
+  { id: 2, name: 'Jane Smith', phone: '555-0144', email: 'jane@example.com', points: 45, totalSpent: 180.25 }
+];
+
+const DEFAULT_USERS = [
+  { id: 1, name: 'Admin User', username: 'admin', password: 'admin123', role: 'admin' },
+  { id: 2, name: 'John Cashier', username: 'cashier', password: 'cashier123', role: 'cashier' }
+];
+
+const DEFAULT_ROLES = [
+  { id: 1, name: 'admin', permissions: ['pos', 'inventory', 'customers', 'reports', 'settings', 'user_mgmt'] },
+  { id: 2, name: 'cashier', permissions: ['pos', 'customers'] },
+  { id: 3, name: 'manager', permissions: ['pos', 'inventory', 'customers', 'reports'] }
+];
+
+let products = loadFromStorage('sp_products', DEFAULT_PRODUCTS);
+let customers = loadFromStorage('sp_customers', DEFAULT_CUSTOMERS);
+let transactions = loadFromStorage('sp_tx', []);
+let shifts = loadFromStorage('sp_shifts', []);
+let currentShift = loadFromStorage('sp_curr_shift', null);
+let users = loadFromStorage('sp_users', DEFAULT_USERS);
+let roles = loadFromStorage('sp_roles', DEFAULT_ROLES);
+let currentUser = loadFromStorage('sp_current_user', null);
+let cart = [];
+let holds = loadFromStorage('sp_holds', []);
+let activeCustomer = null;
+let regInput = "0";
+let regQty = 1;
+let selectedPayMethod = 'cash';
+let selectedCategory = 'ALL';
+let currentTxDetails = null;
+let pendingTransaction = null;
+
+// TIME TRACKING STATE
+let timeRecords = loadFromStorage('sp_time_records', []);
+let currentTimeRecord = loadFromStorage('sp_current_time_record', null);
+let timeUpdateInterval = null;
+
+let settings = loadFromStorage('sp_settings', {
+  storeName: 'SwiftPOS Pro',
+  storeAddress: '123 Main Street, Your City',
+  storePhone: '(555) 123-4567',
+  taxRate: 10,
+  taxName: 'Sales Tax',
+  receiptFooter: 'Thank you for your purchase!'
+});
+
+// STORAGE FUNCTIONS
+function loadFromStorage(key, defaultValue) {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+function saveToStorage(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    showToast("Storage full - please export data", "e");
+    return false;
+  }
+}
+
+function saveAllData() {
+  saveToStorage('sp_products', products);
+  saveToStorage('sp_customers', customers);
+  saveToStorage('sp_tx', transactions);
+  saveToStorage('sp_shifts', shifts);
+  saveToStorage('sp_curr_shift', currentShift);
+  saveToStorage('sp_holds', holds);
+  saveToStorage('sp_users', users);
+  saveToStorage('sp_roles', roles);
+  saveToStorage('sp_settings', settings);
+  saveToStorage('sp_time_records', timeRecords);
+  saveToStorage('sp_current_time_record', currentTimeRecord);
+}
+
+// EXPORT/IMPORT
+function exportData() {
+  const data = { products, customers, transactions, shifts, currentShift, users, roles, settings, timeRecords, exportDate: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `swiftpos-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Data exported successfully", "s");
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.products && data.customers) {
+          products = data.products;
+          customers = data.customers;
+          transactions = data.transactions || [];
+          shifts = data.shifts || [];
+          currentShift = data.currentShift || null;
+          users = data.users || DEFAULT_USERS;
+          roles = data.roles || DEFAULT_ROLES;
+          settings = data.settings || settings;
+          timeRecords = data.timeRecords || [];
+          saveAllData();
+          initApp();
+          showToast("Data imported successfully", "s");
+        }
+      } catch { showToast("Error importing data", "e"); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// AUTH
+function doLogin() {
+  const u = document.getElementById('au').value;
+  const p = document.getElementById('ap').value;
+  const user = users.find(x => x.username === u && x.password === p);
+  if(user) {
+    currentUser = user;
+    saveToStorage('sp_current_user', currentUser);
+    saveToStorage('sp_session', 'active');
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    updateUserUI();
+    initApp();
+    checkPermissions();
+  } else {
+    document.getElementById('aerr').innerText = 'Invalid username or password';
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  saveToStorage('sp_current_user', null);
+  localStorage.removeItem('sp_session');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth').style.display = 'flex';
+}
+
+function updateUserUI() {
+  if(currentUser) {
+    document.getElementById('ulbl').innerText = currentUser.name;
+    document.getElementById('udot').className = currentUser.role === 'admin' ? 'udot adm' : 'udot';
+  }
+}
+
+function checkPermissions() {
+  if(!currentUser) return;
+  const userRole = roles.find(r => r.name === currentUser.role);
+  if(!userRole) return;
+  const hasSettingsAccess = userRole.permissions.includes('settings') || userRole.permissions.includes('user_mgmt');
+  document.getElementById('nb-settings').style.display = hasSettingsAccess ? 'inline-block' : 'none';
+  document.querySelectorAll('[data-admin-only]').forEach(el => {
+    const isAdmin = userRole.permissions.includes('user_mgmt');
+    el.style.display = isAdmin ? 'block' : 'none';
+  });
+}
+
+function resetData() {
+  if(confirm("Reset all stored data?")) {
+    localStorage.clear();
+    products = [...DEFAULT_PRODUCTS];
+    customers = [...DEFAULT_CUSTOMERS];
+    transactions = [];
+    shifts = [];
+    currentShift = null;
+    holds = [];
+    users = [...DEFAULT_USERS];
+    roles = [...DEFAULT_ROLES];
+    timeRecords = [];
+    currentTimeRecord = null;
+    settings = { storeName: 'SwiftPOS Pro', storeAddress: '123 Main Street, Your City', storePhone: '(555) 123-4567', taxRate: 10, taxName: 'Sales Tax', receiptFooter: 'Thank you for your purchase!' };
+    initApp();
+    showToast("Data reset complete", "s");
+  }
+}
+
+// NAVIGATION
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById(`page-${pageId}`).classList.add('on');
+  document.getElementById(`nb-${pageId}`).classList.add('on');
+  if(pageId === 'dashboard') renderDashboard();
+  if(pageId === 'inventory') renderInventory();
+  if(pageId === 'customers') renderCustomersPage();
+  if(pageId === 'shifts') renderShiftsPage();
+  if(pageId === 'transactions') renderTransactions();
+  if(pageId === 'reports') renderReports();
+  if(pageId === 'settings') renderSettings();
+  if(pageId === 'time-tracking') { updateTimeTrackingUI(); renderAttendance(); renderAttendanceHistory(); }
+}
+
+function setPosTab(tab) {
+  document.querySelectorAll('.pm-tab').forEach(t => t.classList.remove('on'));
+  document.getElementById(`tab-${tab}`).classList.add('on');
+  document.getElementById('pane-register').style.display = tab === 'register' ? 'flex' : 'none';
+  document.getElementById('pane-products').style.display = tab === 'products' ? 'flex' : 'none';
+  document.getElementById('pane-holds').style.display = tab === 'holds' ? 'flex' : 'none';
+}
+
+// POS FUNCTIONS
+function numpad(key) {
+  if(key === 'clear') { regInput = "0"; regQty = 1; }
+  else if(key === 'back') { regInput = regInput.length > 1 ? regInput.slice(0, -1) : "0"; }
+  else if(key === '.') { if(!regInput.includes('.')) regInput += '.'; }
+  else if(key === 'qty') { let q = prompt("Enter Quantity:", regQty); if(q && !isNaN(q) && Number(q) > 0) regQty = Number(q); }
+  else if(key === 'percent') { let pct = prompt("Enter discount percentage:", "10"); if(pct && !isNaN(pct) && Number(pct) > 0) { document.getElementById('disc-v').value = pct; document.getElementById('disc-t').value = 'pct'; calcTotals(); showToast(`${pct}% discount applied`, "i"); } }
+  else if(key === 'add') {
+    let price = parseFloat(regInput);
+    if(price > 0) {
+      let desc = document.getElementById('reg-desc').value || 'Custom Item';
+      addToCart({ id: Date.now(), name: desc, price: price, emoji: '🏷️' }, regQty);
+      regInput = "0"; regQty = 1; document.getElementById('reg-desc').value = '';
+    } else { showToast("Enter a valid amount", "w"); }
+  }
+  else { regInput = regInput === "0" ? key : regInput + key; }
+  let formatted = parseFloat(regInput || "0").toFixed(2);
+  let qtyLbl = regQty > 1 ? ` (${regQty}x)` : '';
+  document.getElementById('reg-display').innerText = `$${formatted}${qtyLbl}`;
+}
+
+function renderProducts() {
+  const q = document.getElementById('psearch').value.toLowerCase();
+  const grid = document.getElementById('pgrid');
+  const catWrap = document.getElementById('cats');
+  const cats = ['ALL', ...new Set(products.map(p => p.cat))];
+  catWrap.innerHTML = cats.map(c => `<button class="cat ${selectedCategory===c?'on':''}" onclick="filterCat('${c}')">${c}</button>`).join('');
+  grid.innerHTML = products.filter(p => (selectedCategory === 'ALL' || p.cat === selectedCategory) && (p.name.toLowerCase().includes(q) || p.sku.includes(q))).map(p => `
+    <div class="pcard ${p.stock <= 0 ? 'oos' : ''}" onclick="addToCartById(${p.id})">
+      ${p.stock <= 3 && p.stock > 0 ? '<div class="pcard-badge">LOW</div>' : ''}
+      <div class="pcard-emoji">${p.emoji || '📦'}</div>
+      <div class="pcard-name">${p.name}</div>
+      <div class="pcard-price">$${p.price.toFixed(2)}</div>
+      <div class="pcard-stock ${p.stock <= 3 ? (p.stock <= 0 ? 'out' : 'low') : ''}">${p.stock} in stock</div>
+    </div>
+  `).join('');
+}
+
+function filterCat(c) { selectedCategory = c; renderProducts(); }
+
+function addToCartById(id) {
+  const prod = products.find(p => p.id === id);
+  if(prod) { if(prod.stock <= 0) { showToast("Out of stock!", "e"); return; } addToCart(prod, 1); }
+}
+
+function addToCart(item, qty = 1) {
+  const existing = cart.find(i => i.id === item.id);
+  const productInInventory = products.find(p => p.id === item.id);
+  if(productInInventory && productInInventory.stock < qty) { showToast(`Only ${productInInventory.stock} in stock`, "w"); qty = productInInventory.stock; if(qty <= 0) return; }
+  if(existing) { existing.qty += qty; } else { cart.push({ ...item, qty }); }
+  renderCart(); showToast(`${item.name} added to cart`, "s");
+}
+
+function updateCartQty(idx, delta) {
+  const item = cart[idx];
+  const productInInventory = products.find(p => p.id === item.id);
+  if(delta > 0 && productInInventory && productInInventory.stock < item.qty + delta) { showToast(`Only ${productInInventory.stock} in stock`, "w"); return; }
+  cart[idx].qty += delta;
+  if(cart[idx].qty <= 0) cart.splice(idx, 1);
+  renderCart();
+}
+
+function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
+
+function clearCart() {
+  if(cart.length === 0) return;
+  if(confirm("Clear entire cart?")) { cart = []; renderCart(); showToast("Cart cleared", "i"); }
+}
+
+function voidLast() {
+  if(cart.length > 0) { const lastItem = cart.pop(); renderCart(); showToast(`Voided: ${lastItem.name}`, "i"); }
+}
+
+function renderCart() {
+  const body = document.getElementById('cart-body');
+  document.getElementById('cart-badge').innerText = cart.reduce((a, b) => a + b.qty, 0);
+  if(cart.length === 0) { body.innerHTML = `<div class="empty"><div class="empty-ico">🛒</div><p>Add items or use register</p></div>`; }
+  else { body.innerHTML = cart.map((item, idx) => `
+    <div class="ci">
+      <div class="ci-emoji">${item.emoji || '🏷️'}</div>
+      <div class="ci-info"><div class="ci-name">${item.name}</div><div class="ci-price">$${(item.price * item.qty).toFixed(2)}</div></div>
+      <div class="qc">
+        <button class="qb" onclick="updateCartQty(${idx}, -1)">-</button>
+        <span class="qn">${item.qty}</span>
+        <button class="qb" onclick="updateCartQty(${idx}, 1)">+</button>
+      </div>
+      <button class="ci-del" onclick="removeFromCart(${idx})">✕</button>
+    </div>
+  `).join(''); }
+  calcTotals();
+}
+
+function calcTotals() {
+  let sub = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  let discV = parseFloat(document.getElementById('disc-v').value || 0);
+  let discT = document.getElementById('disc-t').value;
+  let disc = discT === 'pct' ? (sub * (discV / 100)) : discV;
+  let taxable = Math.max(0, sub - disc);
+  let tax = taxable * (settings.taxRate / 100);
+  let tip = parseFloat(document.getElementById('tip-v').value || 0);
+  let total = taxable + tax + tip;
+  document.getElementById('c-sub').innerText = `$${sub.toFixed(2)}`;
+  document.getElementById('c-disc').innerText = `-$${disc.toFixed(2)}`;
+  document.getElementById('c-tax').innerText = `$${tax.toFixed(2)}`;
+  document.getElementById('c-tip').innerText = `$${tip.toFixed(2)}`;
+  document.getElementById('c-total').innerText = `$${total.toFixed(2)}`;
+  document.getElementById('tax-lbl').innerText = settings.taxRate;
+  return { sub, disc, tax, tip, total };
+}
+
+// PAYMENT
+function openPayModal() {
+  if(cart.length === 0) { showToast("Cart is empty", "w"); return; }
+  let totals = calcTotals();
+  document.getElementById('cash-tendered').value = totals.total.toFixed(2);
+  calcChange(); openModal('m-pay');
+}
+
+function setPayMethod(m) {
+  selectedPayMethod = m;
+  document.querySelectorAll('.pm').forEach(el => el.classList.remove('on'));
+  document.getElementById(`pm-${m}`).classList.add('on');
+  document.getElementById('pay-cash-sec').style.display = m === 'cash' ? 'block' : 'none';
+}
+
+function calcChange() {
+  let totals = calcTotals();
+  let tendered = parseFloat(document.getElementById('cash-tendered').value || 0);
+  let change = Math.max(0, tendered - totals.total);
+  document.getElementById('change-due').innerText = `$${change.toFixed(2)}`;
+}
+
+function processPayment() {
+  let totals = calcTotals();
+  let tx = {
+    id: 'TX-' + Math.floor(100000 + Math.random() * 900000),
+    time: new Date().toLocaleString(),
+    items: [...cart], subtotal: totals.sub, discount: totals.disc, tax: totals.tax, taxRate: settings.taxRate, tip: totals.tip, total: totals.total,
+    method: selectedPayMethod, customer: activeCustomer ? activeCustomer.name : 'Walk-in', customerId: activeCustomer ? activeCustomer.id : null,
+    note: document.getElementById('order-note').value || '', isDelivery: false
+  };
+  cart.forEach(ci => { let p = products.find(x => x.id === ci.id); if(p) p.stock = Math.max(0, p.stock - ci.qty); });
+  saveToStorage('sp_products', products);
+  if(activeCustomer) { const customer = customers.find(c => c.id === activeCustomer.id); if(customer) { customer.points += Math.floor(totals.total); customer.totalSpent = (customer.totalSpent || 0) + totals.total; } saveToStorage('sp_customers', customers); }
+  transactions.unshift(tx); saveToStorage('sp_tx', transactions);
+  if(currentShift) { currentShift.salesTotal = (currentShift.salesTotal || 0) + totals.total; if(selectedPayMethod === 'cash') { currentShift.cashCollected = (currentShift.cashCollected || 0) + totals.total; } else { currentShift.cardCollected = (currentShift.cardCollected || 0) + totals.total; } saveToStorage('sp_curr_shift', currentShift); }
+  pendingTransaction = tx; closeModal('m-pay'); openModal('m-receipt-option');
+}
+
+function confirmPrintReceipt(shouldPrint) {
+  closeModal('m-receipt-option');
+  if(shouldPrint && pendingTransaction) { printReceipt(pendingTransaction); }
+  pendingTransaction = null; clearCart(); showToast("Sale Completed!", "s");
+}
+
+// DELIVERY
+function openDeliveryModal() {
+  if(cart.length === 0) { showToast("Cart is empty", "w"); return; }
+  openModal('m-delivery');
+}
+
+function processDelivery() {
+  const name = document.getElementById('del-name').value;
+  const phone = document.getElementById('del-phone').value;
+  const address = document.getElementById('del-address').value;
+  const email = document.getElementById('del-email').value;
+  const payment = document.getElementById('del-payment').value;
+  const notes = document.getElementById('del-notes').value;
+  if(!name || !phone || !address) { showToast("Please fill in all required fields", "e"); return; }
+  let totals = calcTotals();
+  let tx = {
+    id: 'TX-' + Math.floor(100000 + Math.random() * 900000),
+    time: new Date().toLocaleString(), items: [...cart], subtotal: totals.sub, discount: totals.disc, tax: totals.tax, taxRate: settings.taxRate, tip: totals.tip, total: totals.total,
+    method: 'delivery', paymentMethod: payment, customer: name, isDelivery: true,
+    deliveryInfo: { name, phone, address, email, payment, notes }, note: notes || `Delivery to ${name}`
+  };
+  cart.forEach(ci => { let p = products.find(x => x.id === ci.id); if(p) p.stock = Math.max(0, p.stock - ci.qty); });
+  saveToStorage('sp_products', products);
+  transactions.unshift(tx); saveToStorage('sp_tx', transactions);
+  if(currentShift) { currentShift.salesTotal = (currentShift.salesTotal || 0) + totals.total; if(payment === 'cash') { currentShift.cashCollected = (currentShift.cashCollected || 0) + totals.total; } else { currentShift.cardCollected = (currentShift.cardCollected || 0) + totals.total; } saveToStorage('sp_curr_shift', currentShift); }
+  pendingTransaction = tx; closeModal('m-delivery'); clearDeliveryForm(); openModal('m-receipt-option'); showToast("Delivery order created!", "s");
+}
+
+function clearDeliveryForm() {
+  document.getElementById('del-name').value = '';
+  document.getElementById('del-phone').value = '';
+  document.getElementById('del-address').value = '';
+  document.getElementById('del-email').value = '';
+  document.getElementById('del-payment').value = 'cash';
+  document.getElementById('del-notes').value = '';
+}
+
+// HOLDS
+function holdOrder() {
+  if(cart.length === 0) return;
+  holds.push({ id: Date.now(), cart: [...cart], customer: activeCustomer, note: document.getElementById('order-note').value, time: new Date().toLocaleString() });
+  saveToStorage('sp_holds', holds);
+  cart = []; document.getElementById('order-note').value = ''; clearCustomer(); renderCart(); renderHolds(); showToast("Order held", "i");
+}
+
+function renderHolds() {
+  document.getElementById('hold-count').innerText = holds.length;
+  const container = document.getElementById('holds-list');
+  if(holds.length === 0) { container.innerHTML = `<div class="empty"><p>No held orders</p></div>`; }
+  else { container.innerHTML = holds.map((h, i) => `
+    <div class="hold-card" onclick="resumeHold(${i})">
+      <div><strong>Hold #${i+1}</strong> - ${h.cart.reduce((a,b) => a + b.qty, 0)} items<div style="font-size:11px;color:var(--muted)">${h.time}</div><div style="font-size:11px;color:var(--accent)">$${h.cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2)}</div></div>
+      <button class="btn btn-xs btn-r ml-a" onclick="deleteHold(${i})">✕</button>
+    </div>
+  `).join(''); }
+}
+
+function resumeHold(idx) {
+  const hold = holds[idx];
+  cart = [...hold.cart]; activeCustomer = hold.customer; document.getElementById('order-note').value = hold.note || '';
+  if(activeCustomer) { document.getElementById('loyalty-row').style.display = 'flex'; document.getElementById('cust-name').innerText = activeCustomer.name; document.getElementById('cust-points').innerText = activeCustomer.points; }
+  holds.splice(idx, 1); saveToStorage('sp_holds', holds); renderHolds(); renderCart(); setPosTab('register'); showToast("Order resumed", "s");
+}
+
+function deleteHold(idx) { holds.splice(idx, 1); saveToStorage('sp_holds', holds); renderHolds(); }
+
+// SHIFTS
+function confirmOpenShift() {
+  let cash = parseFloat(document.getElementById('open-cash-inp').value || 0);
+  currentShift = { id: Date.now(), opened: new Date().toLocaleString(), startCash: cash, salesTotal: 0, cashCollected: 0, cardCollected: 0, transactionCount: 0, status: 'Open' };
+  saveToStorage('sp_curr_shift', currentShift); updateShiftUI(); closeModal('m-open-shift'); showToast("Shift Opened", "s");
+}
+
+function closeShift() {
+  if(!currentShift) return;
+  const shiftTxs = transactions.filter(tx => { const txTime = new Date(tx.time); const shiftTime = new Date(currentShift.opened); return txTime >= shiftTime; });
+  currentShift.transactionCount = shiftTxs.length;
+  const summary = `
+    <div class="tx-details">
+      <div class="tx-detail-item"><div class="tx-detail-label">Opened</div><div class="tx-detail-value">${currentShift.opened}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Starting Cash</div><div class="tx-detail-value">$${currentShift.startCash.toFixed(2)}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Total Sales</div><div class="tx-detail-value">$${(currentShift.salesTotal || 0).toFixed(2)}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Transactions</div><div class="tx-detail-value">${currentShift.transactionCount}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Cash Collected</div><div class="tx-detail-value">$${(currentShift.cashCollected || 0).toFixed(2)}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Card Collected</div><div class="tx-detail-value">$${(currentShift.cardCollected || 0).toFixed(2)}</div></div>
+    </div>`;
+  document.getElementById('close-shift-summary').innerHTML = summary; openModal('m-close-shift');
+}
+
+function confirmCloseShift() {
+  currentShift.status = 'Closed'; currentShift.closed = new Date().toLocaleString(); currentShift.expectedCash = currentShift.startCash + (currentShift.cashCollected || 0);
+  shifts.unshift(currentShift); saveToStorage('sp_shifts', shifts);
+  generateDailyReport(currentShift);
+  currentShift = null; saveToStorage('sp_curr_shift', null); closeModal('m-close-shift'); updateShiftUI(); showToast("Shift Closed & Report Generated", "s");
+}
+
+function generateDailyReport(shift) {
+  const report = { date: new Date().toISOString().split('T')[0], shiftId: shift.id, totalSales: shift.salesTotal || 0, cashCollected: shift.cashCollected || 0, cardCollected: shift.cardCollected || 0, transactionCount: shift.transactionCount || 0, startCash: shift.startCash, expectedCash: shift.startCash + (shift.cashCollected || 0), generatedAt: new Date().toISOString() };
+  let reports = loadFromStorage('sp_reports', []);
+  reports.unshift(report); saveToStorage('sp_reports', reports);
+}
+
+function updateShiftUI() {
+  const dot = document.getElementById('shift-dot');
+  const lbl = document.getElementById('shift-label');
+  const btnOpen = document.getElementById('btn-open-shift');
+  const btnClose = document.getElementById('btn-close-shift');
+  if(currentShift) { dot.classList.add('open'); lbl.innerText = 'Shift Active'; btnOpen.style.display = 'none'; btnClose.style.display = 'inline-flex'; }
+  else { dot.classList.remove('open'); lbl.innerText = 'No Shift'; btnOpen.style.display = 'inline-flex'; btnClose.style.display = 'none'; }
+}
+
+// CUSTOMERS
+function openCustomerModal() { searchCustomers(); openModal('m-cust'); }
+
+function searchCustomers() {
+  let q = document.getElementById('cust-search-inp').value.toLowerCase();
+  let list = document.getElementById('cust-list-container');
+  list.innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `
+    <div class="customer-item" onclick="selectCustomer(${c.id})">
+      <div class="customer-name">${c.name}</div>
+      <div class="customer-info">${c.phone} | Points: ${c.points} | Total Spent: $${(c.totalSpent || 0).toFixed(2)}</div>
+    </div>
+  `).join('');
+}
+
+function selectCustomer(id) {
+  activeCustomer = customers.find(c => c.id === id);
+  document.getElementById('loyalty-row').style.display = 'flex';
+  document.getElementById('cust-name').innerText = activeCustomer.name;
+  document.getElementById('cust-points').innerText = activeCustomer.points;
+  closeModal('m-cust'); showToast(`Customer: ${activeCustomer.name}`, "s");
+}
+
+function clearCustomer() { activeCustomer = null; document.getElementById('loyalty-row').style.display = 'none'; }
+
+function saveCustomer() {
+  let name = document.getElementById('nc-name').value;
+  let phone = document.getElementById('nc-phone').value;
+  let email = document.getElementById('nc-email').value;
+  if(!name) { showToast("Name is required", "e"); return; }
+  customers.push({ id: Date.now(), name, phone, email, points: 0, totalSpent: 0 });
+  saveToStorage('sp_customers', customers); closeModal('m-add-cust');
+  document.getElementById('nc-name').value = ''; document.getElementById('nc-phone').value = ''; document.getElementById('nc-email').value = '';
+  showToast("Customer Added", "s"); renderCustomersPage();
+}
+
+function renderCustomersPage() {
+  const q = document.getElementById('cust-search-page').value.toLowerCase();
+  document.getElementById('cust-tbl-body').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.email.includes(q)).map(c => `
+    <tr><td>${c.name}</td><td>${c.phone}</td><td>${c.email}</td><td>${c.points}</td><td>$${(c.totalSpent || 0).toFixed(2)}</td>
+    <td><button class="btn btn-xs btn-b" onclick="viewCustomer(${c.id})">View</button> <button class="btn btn-xs btn-r" onclick="deleteCustomer(${c.id})">Delete</button></td></tr>
+  `).join('');
+}
+
+function viewCustomer(id) { const c = customers.find(x => x.id === id); if(c) showToast(`${c.name} | Points: ${c.points} | Spent: $${(c.totalSpent || 0).toFixed(2)}`, "i"); }
+
+function deleteCustomer(id) { if(confirm("Delete this customer?")) { customers = customers.filter(c => c.id !== id); saveToStorage('sp_customers', customers); renderCustomersPage(); showToast("Customer deleted", "i"); } }
+
+// INVENTORY
+function renderInventory() {
+  const q = document.getElementById('inv-search').value.toLowerCase();
+  const catFilter = document.getElementById('inv-cat-filter');
+  const cats = [...new Set(products.map(p => p.cat))];
+  catFilter.innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('inv-body').innerHTML = products.filter(p => (catFilter.value === 'all' || p.cat === catFilter.value) && (p.name.toLowerCase().includes(q) || p.sku.includes(q))).map(p => `
+    <tr><td>${p.emoji || '📦'} ${p.name}</td><td>${p.cat}</td><td><code>${p.sku}</code></td><td>$${p.price.toFixed(2)}</td><td>${p.stock}</td>
+    <td>${p.stock <= 0 ? '<span class="tag tr">OUT</span>' : p.stock <= 3 ? '<span class="tag ty">LOW</span>' : '<span class="tag tg">OK</span>'}</td>
+    <td><button class="btn btn-xs btn-b" onclick="editProduct(${p.id})">Edit</button> <button class="btn btn-xs btn-r" onclick="deleteProduct(${p.id})">Delete</button></td></tr>
+  `).join('');
+}
+
+function saveProduct() {
+  let name = document.getElementById('np-name').value;
+  let cat = document.getElementById('np-cat').value;
+  let sku = document.getElementById('np-sku').value || String(Date.now()).slice(-4);
+  let price = parseFloat(document.getElementById('np-price').value || 0);
+  let stock = parseInt(document.getElementById('np-stock').value || 0);
+  let emoji = document.getElementById('np-emoji').value || '📦';
+  if(!name) { showToast("Name is required", "e"); return; }
+  products.push({ id: Date.now(), name, cat, sku, price, stock, emoji });
+  saveToStorage('sp_products', products); closeModal('m-add-prod'); clearProductForm(); renderInventory(); renderProducts(); showToast("Product Added", "s");
+}
+
+function clearProductForm() {
+  document.getElementById('np-name').value = ''; document.getElementById('np-cat').value = 'General';
+  document.getElementById('np-sku').value = ''; document.getElementById('np-price').value = '0.00';
+  document.getElementById('np-stock').value = '10'; document.getElementById('np-emoji').value = '';
+}
+
+function editProduct(id) { const p = products.find(x => x.id === id); if(p) { const newStock = prompt(`Edit stock for ${p.name}:`, p.stock); if(newStock !== null && !isNaN(newStock)) { p.stock = parseInt(newStock); saveToStorage('sp_products', products); renderInventory(); renderProducts(); showToast("Stock updated", "s"); } } }
+function deleteProduct(id) { if(confirm("Delete this product?")) { products = products.filter(p => p.id !== id); saveToStorage('sp_products', products); renderInventory(); renderProducts(); showToast("Product deleted", "i"); } }
+
+// TRANSACTIONS
+function renderTransactions() {
+  const q = document.getElementById('tx-search').value.toLowerCase();
+  const methodFilter = document.getElementById('tx-method-filter').value;
+  const dateFilter = document.getElementById('tx-date-filter').value;
+  let filteredTxs = transactions;
+  if(q) filteredTxs = filteredTxs.filter(tx => tx.id.toLowerCase().includes(q) || tx.customer.toLowerCase().includes(q) || tx.time.toLowerCase().includes(q));
+  if(methodFilter !== 'all') filteredTxs = filteredTxs.filter(tx => tx.method === methodFilter);
+  if(dateFilter !== 'all') {
+    const now = new Date();
+    filteredTxs = filteredTxs.filter(tx => {
+      const txDate = new Date(tx.time);
+      if(dateFilter === 'today') return txDate.toDateString() === now.toDateString();
+      else if(dateFilter === 'week') { const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000); return txDate >= weekAgo; }
+      else if(dateFilter === 'month') { const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000); return txDate >= monthAgo; }
+      return true;
+    });
+  }
+  document.getElementById('tx-body').innerHTML = filteredTxs.length === 0 ? `<tr><td colspan="7" style="text-align:center;color:var(--muted)">No transactions found</td></tr>` : filteredTxs.map(tx => `
+    <tr><td>${tx.time}</td><td><code>${tx.id}</code></td><td>${tx.customer}</td><td>${tx.items ? tx.items.reduce((a,b) => a + b.qty, 0) : '—'}</td>
+    <td><span class="tag ${tx.method === 'cash' ? 'tg' : tx.method === 'card' ? 'tb' : tx.method === 'mobile' ? 'ty' : 'to'}">${tx.method.toUpperCase()}</span></td>
+    <td>$${tx.total.toFixed(2)}</td>
+    <td><button class="btn btn-xs btn-b" onclick="viewTransaction('${tx.id}')">View</button> <button class="btn btn-xs btn-y" onclick="printReceiptById('${tx.id}')">Print</button></td></tr>
+  `).join('');
+}
+
+function viewTransaction(id) {
+  const tx = transactions.find(t => t.id === id);
+  if(tx) {
+    currentTxDetails = tx;
+    const details = `
+      <div class="tx-details">
+        <div class="tx-detail-item"><div class="tx-detail-label">Transaction ID</div><div class="tx-detail-value">${tx.id}</div></div>
+        <div class="tx-detail-item"><div class="tx-detail-label">Date/Time</div><div class="tx-detail-value">${tx.time}</div></div>
+        <div class="tx-detail-item"><div class="tx-detail-label">Customer</div><div class="tx-detail-value">${tx.customer}</div></div>
+        <div class="tx-detail-item"><div class="tx-detail-label">Payment Method</div><div class="tx-detail-value">${tx.method.toUpperCase()}</div></div>
+        ${tx.isDelivery ? `<div class="tx-detail-item"><div class="tx-detail-label">Delivery Address</div><div class="tx-detail-value">${tx.deliveryInfo.address}</div></div>
+        <div class="tx-detail-item"><div class="tx-detail-label">Delivery Phone</div><div class="tx-detail-value">${tx.deliveryInfo.phone}</div></div>` : ''}
+      </div>
+      <div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
+        ${tx.items.map(item => `<tr><td>${item.name}</td><td>${item.qty}</td><td>$${item.price.toFixed(2)}</td><td>$${(item.price * item.qty).toFixed(2)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <div class="cline" style="margin-top:10px"><span>Subtotal</span><span class="v">$${(tx.subtotal || 0).toFixed(2)}</span></div>
+      <div class="cline"><span>Discount</span><span class="v">-$${(tx.discount || 0).toFixed(2)}</span></div>
+      <div class="cline"><span>Tax (${tx.taxRate || settings.taxRate}%)</span><span class="v">$${(tx.tax || 0).toFixed(2)}</span></div>
+      <div class="cline"><span>Tip</span><span class="v">$${(tx.tip || 0).toFixed(2)}</span></div>
+      <div class="cline total" style="margin-top:10px"><span>TOTAL</span><span class="v">$${tx.total.toFixed(2)}</span></div>
+      ${tx.note ? `<div style="margin-top:10px;font-size:12px;color:var(--muted)">Note: ${tx.note}</div>` : ''}`;
+    document.getElementById('tx-details-content').innerHTML = details; openModal('m-tx-details');
+  }
+}
+
+function printReceiptById(id) { const tx = transactions.find(t => t.id === id); if(tx) printReceipt(tx); }
+
+function printReceipt(tx) {
+  if(!tx) return;
+  const printArea = document.getElementById('print-area');
+  const items = tx.items.map(item => `<div class="pl"><span>${item.name} x${item.qty}</span><span>$${(item.price * item.qty).toFixed(2)}</span></div>`).join('');
+  printArea.innerHTML = `
+    <div class="logo-text">${settings.storeName}</div>
+    <div class="pc">${settings.storeAddress}</div>
+    <div class="pc">Tel: ${settings.storePhone}</div>
+    <div class="divider"></div>
+    <div class="pl"><span>Transaction ID:</span><span>${tx.id}</span></div>
+    <div class="pl"><span>Date/Time:</span><span>${tx.time}</span></div>
+    <div class="pl"><span>Customer:</span><span>${tx.customer}</span></div>
+    ${tx.isDelivery ? `<div class="pl"><span>Delivery Address:</span><span>${tx.deliveryInfo.address}</span></div><div class="pl"><span>Phone:</span><span>${tx.deliveryInfo.phone}</span></div><div class="pl"><span>Payment Method:</span><span>${tx.deliveryInfo.payment.toUpperCase()}</span></div>` : ''}
+    <div class="divider"></div>
+    ${items}
+    <div class="divider"></div>
+    <div class="pl"><span>Subtotal:</span><span>$${(tx.subtotal || 0).toFixed(2)}</span></div>
+    <div class="pl"><span>Discount:</span><span>-$${(tx.discount || 0).toFixed(2)}</span></div>
+    <div class="pl"><span>${settings.taxName} (${tx.taxRate || settings.taxRate}%):</span><span>$${(tx.tax || 0).toFixed(2)}</span></div>
+    <div class="pl"><span>Tip:</span><span>$${(tx.tip || 0).toFixed(2)}</span></div>
+    <div class="plg pl"><span>TOTAL:</span><span>$${tx.total.toFixed(2)}</span></div>
+    <div class="divider"></div>
+    <div class="pl"><span>Payment Method:</span><span>${tx.method.toUpperCase()}</span></div>
+    <div class="pc">${settings.receiptFooter}</div>
+    <div class="pc">Please come again</div>`;
+  window.print();
+}
+
+// SETTINGS
+function renderSettings() {
+  document.getElementById('set-store-name').value = settings.storeName;
+  document.getElementById('set-store-address').value = settings.storeAddress;
+  document.getElementById('set-store-phone').value = settings.storePhone;
+  document.getElementById('set-receipt-footer').value = settings.receiptFooter;
+  document.getElementById('set-tax-rate').value = settings.taxRate;
+  document.getElementById('set-tax-name').value = settings.taxName;
+  renderCashiers(); renderRoles();
+}
+
+function saveStoreSettings() {
+  settings.storeName = document.getElementById('set-store-name').value;
+  settings.storeAddress = document.getElementById('set-store-address').value;
+  settings.storePhone = document.getElementById('set-store-phone').value;
+  settings.receiptFooter = document.getElementById('set-receipt-footer').value;
+  saveToStorage('sp_settings', settings); showToast("Store settings saved", "s");
+}
+
+function saveTaxSettings() {
+  const newTaxRate = parseFloat(document.getElementById('set-tax-rate').value);
+  if(newTaxRate >= 0 && newTaxRate <= 100) {
+    settings.taxRate = newTaxRate; settings.taxName = document.getElementById('set-tax-name').value;
+    saveToStorage('sp_settings', settings);
+    document.getElementById('tax-lbl').innerText = settings.taxRate;
+    document.getElementById('dash-tax-rate').innerText = `Tax Rate: ${settings.taxRate}%`;
+    calcTotals(); showToast(`Tax rate updated to ${settings.taxRate}%`, "s");
+  } else { showToast("Invalid tax rate", "e"); }
+}
+
+function renderCashiers() {
+  const container = document.getElementById('cashier-list');
+  container.innerHTML = users.map(u => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
+      <div><div style="font-weight:600;font-size:13px">${u.name}</div><div style="font-size:11px;color:var(--muted)">@${u.username} | Role: ${u.role}</div></div>
+      <button class="btn btn-xs btn-r" onclick="deleteCashier(${u.id})">Delete</button>
+    </div>`).join('');
+}
+
+function renderRoles() {
+  const container = document.getElementById('role-list');
+  container.innerHTML = roles.map(r => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:6px;margin-bottom:6px">
+      <div><div style="font-weight:600;font-size:13px">${r.name}</div><div style="font-size:11px;color:var(--muted)">${r.permissions.length} permissions</div></div>
+      <button class="btn btn-xs btn-r" onclick="deleteRole(${r.id})">Delete</button>
+    </div>`).join('');
+}
+
+function saveCashier() {
+  const name = document.getElementById('cashier-name').value;
+  const username = document.getElementById('cashier-username').value;
+  const password = document.getElementById('cashier-password').value;
+  const role = document.getElementById('cashier-role').value;
+  if(!name || !username || !password) { showToast("All fields are required", "e"); return; }
+  if(users.some(u => u.username === username)) { showToast("Username already exists", "e"); return; }
+  users.push({ id: Date.now(), name, username, password, role });
+  saveToStorage('sp_users', users); closeModal('m-add-cashier'); clearCashierForm(); renderCashiers(); showToast("Cashier added successfully", "s");
+}
+
+function clearCashierForm() { document.getElementById('cashier-name').value = ''; document.getElementById('cashier-username').value = ''; document.getElementById('cashier-password').value = ''; document.getElementById('cashier-role').value = 'cashier'; }
+function deleteCashier(id) { if(confirm("Delete this cashier?")) { users = users.filter(u => u.id !== id); saveToStorage('sp_users', users); renderCashiers(); showToast("Cashier deleted", "i"); } }
+
+function saveRole() {
+  const name = document.getElementById('role-name').value;
+  if(!name) { showToast("Role name is required", "e"); return; }
+  const permissions = [];
+  if(document.getElementById('perm-pos').checked) permissions.push('pos');
+  if(document.getElementById('perm-inventory').checked) permissions.push('inventory');
+  if(document.getElementById('perm-customers').checked) permissions.push('customers');
+  if(document.getElementById('perm-reports').checked) permissions.push('reports');
+  if(document.getElementById('perm-settings').checked) permissions.push('settings');
+  if(document.getElementById('perm-user-mgmt').checked) permissions.push('user_mgmt');
+  roles.push({ id: Date.now(), name, permissions });
+  saveToStorage('sp_roles', roles); closeModal('m-add-role'); clearRoleForm(); renderRoles(); showToast("Role added successfully", "s");
+}
+
+function clearRoleForm() {
+  document.getElementById('role-name').value = '';
+  document.getElementById('perm-pos').checked = false;
+  document.getElementById('perm-inventory').checked = false;
+  document.getElementById('perm-customers').checked = false;
+  document.getElementById('perm-reports').checked = false;
+  document.getElementById('perm-settings').checked = false;
+  document.getElementById('perm-user-mgmt').checked = false;
+}
+function deleteRole(id) { if(confirm("Delete this role?")) { roles = roles.filter(r => r.id !== id); saveToStorage('sp_roles', roles); renderRoles(); showToast("Role deleted", "i"); } }
+
+// REPORTS (FIXED)
+function generateReport() {
+  const period = document.getElementById('report-period').value;
+  let filteredTxs = transactions;
+  if(period === 'daily') {
+    filteredTxs = transactions.filter(tx => { const txDate = new Date(tx.time); const today = new Date(); return txDate.toDateString() === today.toDateString(); });
+  } else if(period === 'weekly') {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    filteredTxs = transactions.filter(tx => new Date(tx.time) >= weekAgo);
+  } else if(period === 'monthly') {
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    filteredTxs = transactions.filter(tx => new Date(tx.time) >= monthAgo);
+  }
+  const report = {
+    date: new Date().toISOString().split('T')[0], period: period,
+    totalSales: filteredTxs.reduce((a, b) => a + b.total, 0),
+    cashCollected: filteredTxs.filter(tx => tx.method === 'cash').reduce((a, b) => a + b.total, 0),
+    cardCollected: filteredTxs.filter(tx => tx.method !== 'cash').reduce((a, b) => a + b.total, 0),
+    transactionCount: filteredTxs.length, generatedAt: new Date().toISOString()
+  };
+  let reports = loadFromStorage('sp_reports', []);
+  const existingReportIndex = reports.findIndex(r => r.date === report.date && r.period === period);
+  if(existingReportIndex >= 0) { reports[existingReportIndex] = report; } else { reports.unshift(report); }
+  saveToStorage('sp_reports', reports);
+  renderReports(); showToast(`Report generated for ${period} period`, "s");
+}
+
+function renderReports() {
+  const period = document.getElementById('report-period').value;
+  const reports = loadFromStorage('sp_reports', []);
+  const container = document.getElementById('report-content');
+  let filteredReports = reports;
+  if(period === 'daily') { filteredReports = reports.filter(r => { const reportDate = new Date(r.date); const today = new Date(); return reportDate.toDateString() === today.toDateString() && r.period === 'daily'; }); }
+  else if(period === 'weekly') { const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); filteredReports = reports.filter(r => new Date(r.date) >= weekAgo && r.period === 'weekly'); }
+  else if(period === 'monthly') { const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); filteredReports = reports.filter(r => new Date(r.date) >= monthAgo && r.period === 'monthly'); }
+  if(filteredReports.length === 0) { container.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-ico">📊</div><p>No reports available for this period</p></div>'; return; }
+  const latestReport = filteredReports[0];
+  container.innerHTML = `
+    <div class="scard"><div class="sc-lbl">Total Sales</div><div class="sc-val y">$${latestReport.totalSales.toFixed(2)}</div><div class="sc-sub">${latestReport.transactionCount} transaction(s)</div></div>
+    <div class="scard"><div class="sc-lbl">Cash Collected</div><div class="sc-val g">$${latestReport.cashCollected.toFixed(2)}</div><div class="sc-sub">Cash payments</div></div>
+    <div class="scard"><div class="sc-lbl">Card Collected</div><div class="sc-val p">$${latestReport.cardCollected.toFixed(2)}</div><div class="sc-sub">Card payments</div></div>
+    <div class="scard"><div class="sc-lbl">Average Order Value</div><div class="sc-val" style="color:var(--orange)">$${latestReport.transactionCount > 0 ? (latestReport.totalSales / latestReport.transactionCount).toFixed(2) : '0.00'}</div><div class="sc-sub">Per transaction</div></div>`;
+}
+
+function exportReport() {
+  const period = document.getElementById('report-period').value;
+  const reports = loadFromStorage('sp_reports', []);
+  let csv = 'Date,Total Sales,Cash Collected,Card Collected,Transaction Count\n';
+  reports.forEach(r => {
+    if(period === 'daily' && r.date === new Date().toISOString().split('T')[0] && r.period === 'daily') { csv += `${r.date},${r.totalSales},${r.cashCollected},${r.cardCollected},${r.transactionCount}\n`; }
+    else if(period === 'weekly' && r.period === 'weekly') { const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); if(new Date(r.date) >= weekAgo) csv += `${r.date},${r.totalSales},${r.cashCollected},${r.cardCollected},${r.transactionCount}\n`; }
+    else if(period === 'monthly' && r.period === 'monthly') { const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); if(new Date(r.date) >= monthAgo) csv += `${r.date},${r.totalSales},${r.cashCollected},${r.cardCollected},${r.transactionCount}\n`; }
+  });
+  downloadCSV(csv, `report-${period}-${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+function exportTransactions() {
+  let csv = 'Transaction ID,Date/Time,Customer,Items,Payment Method,Subtotal,Discount,Tax,Tip,Total\n';
+  transactions.forEach(tx => { csv += `${tx.id},"${tx.time}",${tx.customer},${tx.items ? tx.items.reduce((a,b) => a + b.qty, 0) : 0},${tx.method},${tx.subtotal || 0},${tx.discount || 0},${tx.tax || 0},${tx.tip || 0},${tx.total}\n`; });
+  downloadCSV(csv, `transactions-${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+function exportInventory() {
+  let csv = 'Name,Category,SKU,Price,Stock\n';
+  products.forEach(p => { csv += `"${p.name}",${p.cat},${p.sku},${p.price},${p.stock}\n`; });
+  downloadCSV(csv, `inventory-${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+function exportShifts() {
+  let csv = 'Opened,Closed,Starting Cash,Sales Total,Cash Collected,Card Collected,Transaction Count,Status\n';
+  shifts.forEach(s => { csv += `"${s.opened}","${s.closed || ''}",${s.startCash},${s.salesTotal || 0},${s.cashCollected || 0},${s.cardCollected || 0},${s.transactionCount || 0},${s.status}\n`; });
+  downloadCSV(csv, `shifts-${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); showToast("Export completed", "s");
+}
+
+// TIME TRACKING
+function clockIn() {
+  if(currentTimeRecord && currentTimeRecord.clockIn && !currentTimeRecord.clockOut) { showToast("Already clocked in!", "w"); return; }
+  const now = new Date();
+  currentTimeRecord = { id: Date.now(), employeeId: currentUser ? currentUser.id : null, employeeName: currentUser ? currentUser.name : 'Unknown', date: now.toISOString().split('T')[0], clockIn: now.toISOString(), clockOut: null, breakStart: null, breakEnd: null, totalBreakTime: 0, status: 'present' };
+  saveToStorage('sp_current_time_record', currentTimeRecord);
+  updateTimeTrackingUI(); showToast(`Clocked in at ${now.toLocaleTimeString()}`, "s");
+}
+
+function clockOut() {
+  if(!currentTimeRecord || !currentTimeRecord.clockIn) { showToast("Not clocked in!", "w"); return; }
+  const clockInTime = new Date(currentTimeRecord.clockIn);
+  const now = new Date();
+  const totalWorkMs = now - clockInTime;
+  const breakMs = currentTimeRecord.totalBreakTime || 0;
+  const actualWorkMs = totalWorkMs - breakMs;
+  const summary = `
+    <div class="tx-details">
+      <div class="tx-detail-item"><div class="tx-detail-label">Clock In</div><div class="tx-detail-value">${clockInTime.toLocaleTimeString()}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Clock Out</div><div class="tx-detail-value">${now.toLocaleTimeString()}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Total Time</div><div class="tx-detail-value">${formatDuration(totalWorkMs)}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Break Time</div><div class="tx-detail-value">${formatDuration(breakMs)}</div></div>
+      <div class="tx-detail-item"><div class="tx-detail-label">Actual Work Time</div><div class="tx-detail-value">${formatDuration(actualWorkMs)}</div></div>
+    </div>`;
+  document.getElementById('clock-out-summary').innerHTML = summary; openModal('m-clock-out-confirm');
+}
+
+function confirmClockOut() {
+  const now = new Date();
+  currentTimeRecord.clockOut = now.toISOString();
+  const clockInTime = new Date(currentTimeRecord.clockIn);
+  const clockOutTime = new Date(currentTimeRecord.clockOut);
+  const totalMs = clockOutTime - clockInTime;
+  const breakMs = currentTimeRecord.totalBreakTime || 0;
+  currentTimeRecord.totalHours = (totalMs - breakMs) / (1000 * 60 * 60);
+  timeRecords.unshift(currentTimeRecord); saveToStorage('sp_time_records', timeRecords);
+  currentTimeRecord = null; saveToStorage('sp_current_time_record', null);
+  closeModal('m-clock-out-confirm'); updateTimeTrackingUI(); renderAttendance(); renderAttendanceHistory(); showToast("Clocked out successfully", "s");
+}
+
+function startBreak() {
+  if(!currentTimeRecord || !currentTimeRecord.clockIn) { showToast("Not clocked in!", "w"); return; }
+  if(currentTimeRecord.breakStart && !currentTimeRecord.breakEnd) { showToast("Already on break!", "w"); return; }
+  breakStartTime = new Date();
+  currentTimeRecord.breakStart = breakStartTime.toISOString(); currentTimeRecord.breakEnd = null;
+  saveToStorage('sp_current_time_record', currentTimeRecord);
+  updateTimeTrackingUI(); showToast(`Break started at ${breakStartTime.toLocaleTimeString()}`, "i");
+}
+
+function endBreak() {
+  if(!currentTimeRecord || !currentTimeRecord.breakStart) { showToast("No active break!", "w"); return; }
+  const breakEndTime = new Date();
+  currentTimeRecord.breakEnd = breakEndTime.toISOString();
+  const breakStart = new Date(currentTimeRecord.breakStart);
+  const breakDuration = (breakEndTime - breakStart) / 1000;
+  currentTimeRecord.totalBreakTime = (currentTimeRecord.totalBreakTime || 0) + (breakDuration * 1000);
+  saveToStorage('sp_current_time_record', currentTimeRecord);
+  updateTimeTrackingUI(); showToast(`Break ended at ${breakEndTime.toLocaleTimeString()}`, "s");
+}
+
+function updateTimeTrackingUI() {
+  const statusDot = document.getElementById('time-status-dot');
+  const statusText = document.getElementById('time-status-text');
+  const clockInBtn = document.getElementById('btn-clock-in');
+  const clockOutBtn = document.getElementById('btn-clock-out');
+  const breakStartBtn = document.getElementById('btn-break-start');
+  const breakEndBtn = document.getElementById('btn-break-end');
+  const clockInTime = document.getElementById('clock-in-time');
+  const totalHours = document.getElementById('total-hours');
+  const breakTime = document.getElementById('break-time');
+  const currentStatus = document.getElementById('current-status');
+  const timeDisplay = document.getElementById('time-display');
+
+  if(currentTimeRecord && currentTimeRecord.clockIn && !currentTimeRecord.clockOut) {
+    statusDot.className = 'time-status-dot clocked-in';
+    statusText.innerText = 'Clocked In';
+    clockInBtn.style.display = 'none'; clockOutBtn.style.display = 'inline-flex';
+    if(currentTimeRecord.breakStart && !currentTimeRecord.breakEnd) { breakStartBtn.style.display = 'none'; breakEndBtn.style.display = 'inline-flex'; currentStatus.innerText = 'On Break'; }
+    else { breakStartBtn.style.display = 'inline-flex'; breakEndBtn.style.display = 'none'; currentStatus.innerText = 'Working'; }
+    const clockInDate = new Date(currentTimeRecord.clockIn);
+    clockInTime.innerText = clockInDate.toLocaleTimeString();
+    if(timeUpdateInterval) clearInterval(timeUpdateInterval);
+    timeUpdateInterval = setInterval(() => {
+      const now = new Date(); const elapsedMs = now - clockInDate;
+      timeDisplay.innerText = formatTime(elapsedMs);
+      const breakMs = currentTimeRecord.totalBreakTime || 0;
+      const actualWorkMs = elapsedMs - breakMs;
+      totalHours.innerText = formatDuration(actualWorkMs); breakTime.innerText = formatDuration(breakMs);
+    }, 1000);
+    totalHours.innerText = formatDuration(Date.now() - clockInDate);
+    breakTime.innerText = formatDuration(currentTimeRecord.totalBreakTime || 0);
+  } else {
+    statusDot.className = 'time-status-dot'; statusText.innerText = 'Not Clocked In';
+    clockInBtn.style.display = 'inline-flex'; clockOutBtn.style.display = 'none';
+    breakStartBtn.style.display = 'none'; breakEndBtn.style.display = 'none';
+    clockInTime.innerText = '—'; totalHours.innerText = '0h 0m'; breakTime.innerText = '0h 0m'; currentStatus.innerText = 'Not Working';
+    timeDisplay.innerText = '00:00:00';
+    if(timeUpdateInterval) { clearInterval(timeUpdateInterval); timeUpdateInterval = null; }
+  }
+}
+
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function formatDuration(ms) {
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
+}
+
+function renderAttendance() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayRecords = timeRecords.filter(r => r.date === today);
+  const tbody = document.getElementById('attendance-body');
+  if(todayRecords.length === 0 && !currentTimeRecord) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted)">No attendance records for today</td></tr>'; return; }
+  let allRecords = [...todayRecords];
+  if(currentTimeRecord && currentTimeRecord.clockIn && !currentTimeRecord.clockOut) { allRecords.unshift(currentTimeRecord); }
+  tbody.innerHTML = allRecords.map(r => {
+    const clockIn = r.clockIn ? new Date(r.clockIn).toLocaleTimeString() : '—';
+    const clockOut = r.clockOut ? new Date(r.clockOut).toLocaleTimeString() : 'Active';
+    const breakStart = r.breakStart ? new Date(r.breakStart).toLocaleTimeString() : '—';
+    const breakEnd = r.breakEnd ? new Date(r.breakEnd).toLocaleTimeString() : '—';
+    const totalHours = r.totalHours ? r.totalHours.toFixed(2) : '—';
+    let statusClass = 'present'; let statusText = 'Present';
+    if(!r.clockIn) { statusClass = 'absent'; statusText = 'Absent'; }
+    else if(r.clockIn) { const clockInHour = new Date(r.clockIn).getHours(); if(clockInHour >= 10) { statusClass = 'late'; statusText = 'Late'; } }
+    return `<tr><td>${r.employeeName}</td><td>${clockIn}</td><td>${clockOut}</td><td>${breakStart}</td><td>${breakEnd}</td><td>${totalHours}h</td><td><span class="attendance-status ${statusClass}">${statusText}</span></td></tr>`;
+  }).join('');
+}
+
+function renderAttendanceHistory() {
+  const search = document.getElementById('attendance-search').value.toLowerCase();
+  const dateFilter = document.getElementById('attendance-date-filter').value;
+  const tbody = document.getElementById('attendance-history-body');
+  let filteredRecords = timeRecords;
+  if(search) filteredRecords = filteredRecords.filter(r => r.employeeName.toLowerCase().includes(search));
+  if(dateFilter === 'today') { const today = new Date().toISOString().split('T')[0]; filteredRecords = filteredRecords.filter(r => r.date === today); }
+  else if(dateFilter === 'week') { const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); filteredRecords = filteredRecords.filter(r => new Date(r.date) >= weekAgo); }
+  else if(dateFilter === 'month') { const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); filteredRecords = filteredRecords.filter(r => new Date(r.date) >= monthAgo); }
+  if(filteredRecords.length === 0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted)">No attendance records found</td></tr>'; return; }
+  tbody.innerHTML = filteredRecords.map(r => {
+    const date = new Date(r.date).toLocaleDateString();
+    const clockIn = r.clockIn ? new Date(r.clockIn).toLocaleTimeString() : '—';
+    const clockOut = r.clockOut ? new Date(r.clockOut).toLocaleTimeString() : '—';
+    const totalHours = r.totalHours ? r.totalHours.toFixed(2) : '—';
+    const breakTime = r.totalBreakTime ? formatDuration(r.totalBreakTime) : '0h 0m';
+    let statusClass = 'present'; let statusText = 'Present';
+    if(!r.clockIn) { statusClass = 'absent'; statusText = 'Absent'; }
+    else if(r.clockIn && !r.clockOut) { statusText = 'Active'; }
+    return `<tr><td>${date}</td><td>${r.employeeName}</td><td>${clockIn}</td><td>${clockOut}</td><td>${totalHours}h</td><td>${breakTime}</td><td><span class="attendance-status ${statusClass}">${statusText}</span></td></tr>`;
+  }).join('');
+}
+
+function exportAttendance() {
+  let csv = 'Date,Employee,Clock In,Clock Out,Total Hours,Break Time,Status\n';
+  timeRecords.forEach(r => {
+    const date = new Date(r.date).toLocaleDateString();
+    const clockIn = r.clockIn ? new Date(r.clockIn).toLocaleTimeString() : '—';
+    const clockOut = r.clockOut ? new Date(r.clockOut).toLocaleTimeString() : '—';
+    const totalHours = r.totalHours ? r.totalHours.toFixed(2) : '0';
+    const breakTime = r.totalBreakTime ? formatDuration(r.totalBreakTime) : '0h 0m';
+    const status = r.clockOut ? 'Completed' : 'Active';
+    csv += `${date},${r.employeeName},${clockIn},${clockOut},${totalHours},${breakTime},${status}\n`;
+  });
+  downloadCSV(csv, `attendance-${new Date().toISOString().split('T')[0]}.csv`);
+}
+
+// DASHBOARD
+function renderDashboard() {
+  let todaySales = transactions.filter(tx => new Date(tx.time).toDateString() === new Date().toDateString()).reduce((a, b) => a + b.total, 0);
+  let todayTax = transactions.filter(tx => new Date(tx.time).toDateString() === new Date().toDateString()).reduce((a, b) => a + b.tax, 0);
+  let lowStock = products.filter(p => p.stock <= 3).length;
+  let avgOrder = transactions.length > 0 ? transactions.reduce((a, b) => a + b.total, 0) / transactions.length : 0;
+  document.getElementById('dash-sales').innerText = `$${todaySales.toFixed(2)}`;
+  document.getElementById('dash-orders-cnt').innerText = `${transactions.filter(tx => new Date(tx.time).toDateString() === new Date().toDateString()).length} transactions today`;
+  document.getElementById('dash-tax').innerText = `$${todayTax.toFixed(2)}`;
+  document.getElementById('dash-tax-rate').innerText = `Tax Rate: ${settings.taxRate}%`;
+  document.getElementById('dash-shift-status').innerText = currentShift ? 'Active' : 'Closed';
+  document.getElementById('dash-cashier').innerText = currentShift ? `Since ${currentShift.opened}` : 'No active shift';
+  document.getElementById('dash-low-stock').innerText = lowStock;
+  document.getElementById('dash-customers').innerText = customers.length;
+  document.getElementById('dash-avg-order').innerText = `$${avgOrder.toFixed(2)}`;
+  const todayTxs = transactions.filter(tx => new Date(tx.time).toDateString() === new Date().toDateString()).slice(0, 10);
+  document.getElementById('dash-tx-body').innerHTML = todayTxs.length === 0 ? `<tr><td colspan="6" style="text-align:center;color:var(--muted)">No transactions recorded today</td></tr>` : todayTxs.map(tx => `
+    <tr><td>${tx.time}</td><td><code>${tx.id}</code></td><td>${tx.customer}</td>
+    <td><span class="tag ${tx.method === 'cash' ? 'tg' : tx.method === 'card' ? 'tb' : tx.method === 'mobile' ? 'ty' : 'to'}">${tx.method.toUpperCase()}</span></td>
+    <td>$${tx.total.toFixed(2)}</td><td><button class="btn btn-xs btn-b" onclick="viewTransaction('${tx.id}')">View</button></td></tr>
+  `).join('');
+}
+
+function renderShiftsPage() {
+  document.getElementById('shifts-history-body').innerHTML = shifts.length === 0 ? `<tr><td colspan="8" style="text-align:center;color:var(--muted)">No shift history available</td></tr>` : shifts.map(s => `
+    <tr><td>${s.opened}</td><td>${s.closed || '—'}</td><td>$${s.startCash.toFixed(2)}</td><td>$${(s.salesTotal || 0).toFixed(2)}</td><td>$${(s.cashCollected || 0).toFixed(2)}</td><td>$${(s.cardCollected || 0).toFixed(2)}</td>
+    <td><span class="tag ${s.status === 'Open' ? 'tg' : 'tr'}">${s.status}</span></td><td><button class="btn btn-xs btn-b" onclick="viewShiftReport(${s.id})">Report</button></td></tr>
+  `).join('');
+}
+function viewShiftReport(id) { const s = shifts.find(x => x.id === id); if(s) showToast(`Shift Report - Sales: $${(s.salesTotal || 0).toFixed(2)} | Cash: $${(s.cashCollected || 0).toFixed(2)}`, "i"); }
+
+// HELPERS
+function openModal(id) { document.getElementById(id).classList.add('on'); }
+function closeModal(id) { document.getElementById(id).classList.remove('on'); }
+
+function showToast(msg, type = 'i') {
+  const t = document.getElementById('toast');
+  t.className = `show ${type}`;
+  t.innerText = msg;
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => { t.className = ''; }, 2500);
+}
+
+function initApp() {
+  updateShiftUI(); updateUserUI(); checkPermissions();
+  renderProducts(); renderCart(); renderHolds(); renderInventory(); renderCustomersPage(); renderShiftsPage(); renderTransactions(); renderDashboard(); renderReports(); renderSettings();
+  updateTimeTrackingUI(); renderAttendance(); renderAttendanceHistory();
+  document.getElementById('tax-lbl').innerText = settings.taxRate;
+  document.getElementById('dash-tax-rate').innerText = `Tax Rate: ${settings.taxRate}%`;
+  const invCatFilter = document.getElementById('inv-cat-filter');
+  if(invCatFilter) { const cats = [...new Set(products.map(p => p.cat))]; invCatFilter.innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join(''); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sessionActive = localStorage.getItem('sp_session');
+  if(sessionActive === 'active' && currentUser) {
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  }
+});
+</script>
+</body>
+</html>
