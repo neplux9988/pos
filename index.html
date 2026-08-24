@@ -26,6 +26,13 @@
 html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px}
 
+/* Fullscreen styles */
+:fullscreen { background: var(--bg); }
+:-webkit-full-screen { background: var(--bg); }
+:-moz-full-screen { background: var(--bg); }
+:fullscreen #app { height: 100vh; width: 100vw; }
+:-webkit-full-screen #app { height: 100vh; width: 100vw; }
+
 /* AUTH */
 #auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 100% 80% at 50% 0%,#1a1800 0%,var(--bg) 65%);z-index:999}
 .auth-box{width:400px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 36px;box-shadow:0 40px 100px #000a}
@@ -36,6 +43,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px
 .inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .2s;margin-bottom:14px}
 .inp:focus{border-color:var(--accent)}
 .inp::placeholder{color:var(--muted2)}
+textarea.inp{min-height:80px;resize:vertical}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;user-select:none}
 .btn:active{transform:scale(0.97)}
 .btn-y{background:var(--accent);color:#111}
@@ -317,11 +325,12 @@ tr:hover td{background:var(--surface2)}
     <div class="topbar-r">
       <button class="btn btn-gr btn-sm" id="btn-open-shift" onclick="openModal('m-open-shift')">▶ Open Shift</button>
       <button class="btn btn-o btn-sm" id="btn-close-shift" onclick="closeShift()" style="display:none">■ Close Shift</button>
+      <button class="btn btn-g btn-sm" onclick="toggleFullscreen()" id="btn-fullscreen" title="Toggle Fullscreen (F11)">⛶ Fullscreen</button>
       <div class="user-chip"><div class="udot adm" id="udot"></div><span id="ulbl">Admin</span></div>
       <button class="btn btn-g btn-sm" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
-
+  
   <div class="main">
     <!-- POS PAGE -->
     <div class="page on" id="page-pos">
@@ -372,7 +381,7 @@ tr:hover td{background:var(--surface2)}
             <div id="holds-list"></div>
           </div>
         </div>
-
+        
         <div class="pos-right">
           <div class="cart-hdr">
             <div class="cart-hdr-title">ORDER</div>
@@ -585,7 +594,6 @@ tr:hover td{background:var(--surface2)}
           <div class="field"><label class="lbl">Store Name</label><input class="inp" id="set-store-name" value="SwiftPOS Pro"></div>
           <div class="field"><label class="lbl">Store Address</label><input class="inp" id="set-store-address" value="123 Main Street, Your City"></div>
           <div class="field"><label class="lbl">Store Phone</label><input class="inp" id="set-store-phone" value="(555) 123-4567"></div>
-          <div class="field"><label class="lbl">Receipt Footer Message</label><input class="inp" id="set-receipt-footer" value="Thank you for your purchase!"></div>
           <button class="btn btn-y btn-full" onclick="saveStoreSettings()">Save Store Settings</button>
         </div>
         <div class="settings-card">
@@ -593,6 +601,15 @@ tr:hover td{background:var(--surface2)}
           <div class="field"><label class="lbl">Tax Rate (%)</label><input class="inp" type="number" id="set-tax-rate" value="10" min="0" max="100" step="0.1"></div>
           <div class="field"><label class="lbl">Tax Name</label><input class="inp" id="set-tax-name" value="Sales Tax"></div>
           <button class="btn btn-y btn-full" onclick="saveTaxSettings()">Save Tax Settings</button>
+        </div>
+        <div class="settings-card">
+          <h3>🧾 Receipt Customization</h3>
+          <div class="field"><label class="lbl">Receipt Header (Top Message)</label><textarea class="inp" id="set-receipt-header">Thank you for shopping with us!</textarea></div>
+          <div class="field"><label class="lbl">Receipt Footer (Bottom Message)</label><textarea class="inp" id="set-receipt-footer">Thank you for your purchase! Please come again.</textarea></div>
+          <div class="field"><label class="lbl">Show Logo on Receipt</label><select class="inp" id="set-receipt-logo"><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label class="lbl">Show Barcode on Receipt</label><select class="inp" id="set-receipt-barcode"><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label class="lbl">Receipt Font Size</label><select class="inp" id="set-receipt-font"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></div>
+          <button class="btn btn-y btn-full" onclick="saveReceiptSettings()">Save Receipt Settings</button>
         </div>
         <div class="settings-card" data-admin-only>
           <h3>👥 Cashier Management</h3>
@@ -837,7 +854,11 @@ let settings = loadFromStorage('sp_settings', {
   storePhone: '(555) 123-4567',
   taxRate: 10,
   taxName: 'Sales Tax',
-  receiptFooter: 'Thank you for your purchase!'
+  receiptHeader: 'Thank you for shopping with us!',
+  receiptFooter: 'Thank you for your purchase! Please come again.',
+  receiptLogo: 'yes',
+  receiptBarcode: 'yes',
+  receiptFontSize: 'medium'
 });
 
 // STORAGE FUNCTIONS
@@ -977,11 +998,74 @@ function resetData() {
     roles = [...DEFAULT_ROLES];
     timeRecords = [];
     currentTimeRecord = null;
-    settings = { storeName: 'SwiftPOS Pro', storeAddress: '123 Main Street, Your City', storePhone: '(555) 123-4567', taxRate: 10, taxName: 'Sales Tax', receiptFooter: 'Thank you for your purchase!' };
+    settings = {
+      storeName: 'SwiftPOS Pro',
+      storeAddress: '123 Main Street, Your City',
+      storePhone: '(555) 123-4567',
+      taxRate: 10,
+      taxName: 'Sales Tax',
+      receiptHeader: 'Thank you for shopping with us!',
+      receiptFooter: 'Thank you for your purchase! Please come again.',
+      receiptLogo: 'yes',
+      receiptBarcode: 'yes',
+      receiptFontSize: 'medium'
+    };
     initApp();
     showToast("Data reset complete", "s");
   }
 }
+
+// FULLSCREEN FUNCTIONS
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    } else if (document.documentElement.webkitRequestFullscreen) {
+      document.documentElement.webkitRequestFullscreen();
+    } else if (document.documentElement.msRequestFullscreen) {
+      document.documentElement.msRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenButton);
+document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+function updateFullscreenButton() {
+  const btn = document.getElementById('btn-fullscreen');
+  if (btn) {
+    if (document.fullscreenElement) {
+      btn.innerHTML = '❌ Exit Fullscreen';
+      btn.classList.add('btn-o');
+      btn.classList.remove('btn-g');
+    } else {
+      btn.innerHTML = '⛶ Fullscreen';
+      btn.classList.add('btn-g');
+      btn.classList.remove('btn-o');
+    }
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F11') {
+    e.preventDefault();
+    toggleFullscreen();
+  }
+  if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+    e.preventDefault();
+    toggleFullscreen();
+  }
+});
 
 // NAVIGATION
 function showPage(pageId) {
@@ -1412,27 +1496,35 @@ function printReceipt(tx) {
   if(!tx) return;
   const printArea = document.getElementById('print-area');
   const items = tx.items.map(item => `<div class="pl"><span>${item.name} x${item.qty}</span><span>$${(item.price * item.qty).toFixed(2)}</span></div>`).join('');
+  const fontSize = settings.receiptFontSize === 'small' ? '10px' : settings.receiptFontSize === 'large' ? '14px' : '12px';
+  const logoHtml = settings.receiptLogo === 'yes' ? `<div class="logo-text">${settings.storeName}</div>` : '';
+  const barcodeHtml = settings.receiptBarcode === 'yes' ? `<div class="divider"></div><div class="pc">*${tx.id}*</div>` : '';
+  
   printArea.innerHTML = `
-    <div class="logo-text">${settings.storeName}</div>
-    <div class="pc">${settings.storeAddress}</div>
-    <div class="pc">Tel: ${settings.storePhone}</div>
-    <div class="divider"></div>
-    <div class="pl"><span>Transaction ID:</span><span>${tx.id}</span></div>
-    <div class="pl"><span>Date/Time:</span><span>${tx.time}</span></div>
-    <div class="pl"><span>Customer:</span><span>${tx.customer}</span></div>
-    ${tx.isDelivery ? `<div class="pl"><span>Delivery Address:</span><span>${tx.deliveryInfo.address}</span></div><div class="pl"><span>Phone:</span><span>${tx.deliveryInfo.phone}</span></div><div class="pl"><span>Payment Method:</span><span>${tx.deliveryInfo.payment.toUpperCase()}</span></div>` : ''}
-    <div class="divider"></div>
-    ${items}
-    <div class="divider"></div>
-    <div class="pl"><span>Subtotal:</span><span>$${(tx.subtotal || 0).toFixed(2)}</span></div>
-    <div class="pl"><span>Discount:</span><span>-$${(tx.discount || 0).toFixed(2)}</span></div>
-    <div class="pl"><span>${settings.taxName} (${tx.taxRate || settings.taxRate}%):</span><span>$${(tx.tax || 0).toFixed(2)}</span></div>
-    <div class="pl"><span>Tip:</span><span>$${(tx.tip || 0).toFixed(2)}</span></div>
-    <div class="plg pl"><span>TOTAL:</span><span>$${tx.total.toFixed(2)}</span></div>
-    <div class="divider"></div>
-    <div class="pl"><span>Payment Method:</span><span>${tx.method.toUpperCase()}</span></div>
-    <div class="pc">${settings.receiptFooter}</div>
-    <div class="pc">Please come again</div>`;
+    <div style="font-size:${fontSize}">
+      ${logoHtml}
+      <div class="pc">${settings.storeAddress}</div>
+      <div class="pc">Tel: ${settings.storePhone}</div>
+      <div class="divider"></div>
+      <div class="pc">${settings.receiptHeader}</div>
+      <div class="divider"></div>
+      <div class="pl"><span>Transaction ID:</span><span>${tx.id}</span></div>
+      <div class="pl"><span>Date/Time:</span><span>${tx.time}</span></div>
+      <div class="pl"><span>Customer:</span><span>${tx.customer}</span></div>
+      ${tx.isDelivery ? `<div class="pl"><span>Delivery Address:</span><span>${tx.deliveryInfo.address}</span></div><div class="pl"><span>Phone:</span><span>${tx.deliveryInfo.phone}</span></div><div class="pl"><span>Payment Method:</span><span>${tx.deliveryInfo.payment.toUpperCase()}</span></div>` : ''}
+      <div class="divider"></div>
+      ${items}
+      <div class="divider"></div>
+      <div class="pl"><span>Subtotal:</span><span>$${(tx.subtotal || 0).toFixed(2)}</span></div>
+      <div class="pl"><span>Discount:</span><span>-$${(tx.discount || 0).toFixed(2)}</span></div>
+      <div class="pl"><span>${settings.taxName} (${tx.taxRate || settings.taxRate}%):</span><span>$${(tx.tax || 0).toFixed(2)}</span></div>
+      <div class="pl"><span>Tip:</span><span>$${(tx.tip || 0).toFixed(2)}</span></div>
+      <div class="plg pl"><span>TOTAL:</span><span>$${tx.total.toFixed(2)}</span></div>
+      <div class="divider"></div>
+      <div class="pl"><span>Payment Method:</span><span>${tx.method.toUpperCase()}</span></div>
+      <div class="pc">${settings.receiptFooter}</div>
+      ${barcodeHtml}
+    </div>`;
   window.print();
 }
 
@@ -1441,9 +1533,13 @@ function renderSettings() {
   document.getElementById('set-store-name').value = settings.storeName;
   document.getElementById('set-store-address').value = settings.storeAddress;
   document.getElementById('set-store-phone').value = settings.storePhone;
-  document.getElementById('set-receipt-footer').value = settings.receiptFooter;
   document.getElementById('set-tax-rate').value = settings.taxRate;
   document.getElementById('set-tax-name').value = settings.taxName;
+  document.getElementById('set-receipt-header').value = settings.receiptHeader;
+  document.getElementById('set-receipt-footer').value = settings.receiptFooter;
+  document.getElementById('set-receipt-logo').value = settings.receiptLogo;
+  document.getElementById('set-receipt-barcode').value = settings.receiptBarcode;
+  document.getElementById('set-receipt-font').value = settings.receiptFontSize;
   renderCashiers(); renderRoles();
 }
 
@@ -1451,7 +1547,6 @@ function saveStoreSettings() {
   settings.storeName = document.getElementById('set-store-name').value;
   settings.storeAddress = document.getElementById('set-store-address').value;
   settings.storePhone = document.getElementById('set-store-phone').value;
-  settings.receiptFooter = document.getElementById('set-receipt-footer').value;
   saveToStorage('sp_settings', settings); showToast("Store settings saved", "s");
 }
 
@@ -1464,6 +1559,16 @@ function saveTaxSettings() {
     document.getElementById('dash-tax-rate').innerText = `Tax Rate: ${settings.taxRate}%`;
     calcTotals(); showToast(`Tax rate updated to ${settings.taxRate}%`, "s");
   } else { showToast("Invalid tax rate", "e"); }
+}
+
+function saveReceiptSettings() {
+  settings.receiptHeader = document.getElementById('set-receipt-header').value;
+  settings.receiptFooter = document.getElementById('set-receipt-footer').value;
+  settings.receiptLogo = document.getElementById('set-receipt-logo').value;
+  settings.receiptBarcode = document.getElementById('set-receipt-barcode').value;
+  settings.receiptFontSize = document.getElementById('set-receipt-font').value;
+  saveToStorage('sp_settings', settings);
+  showToast("Receipt settings saved", "s");
 }
 
 function renderCashiers() {
@@ -1676,7 +1781,7 @@ function updateTimeTrackingUI() {
   const breakTime = document.getElementById('break-time');
   const currentStatus = document.getElementById('current-status');
   const timeDisplay = document.getElementById('time-display');
-
+  
   if(currentTimeRecord && currentTimeRecord.clockIn && !currentTimeRecord.clockOut) {
     statusDot.className = 'time-status-dot clocked-in';
     statusText.innerText = 'Clocked In';
